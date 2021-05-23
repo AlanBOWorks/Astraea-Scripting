@@ -69,9 +69,9 @@ namespace AIEssentials
             set => _defaultRequest = value;
         }
 
-        protected UsedRequest CurrentUsedRequest;
-        public dynamic CurrentReferenceKey => CurrentUsedRequest.ReferenceKey;
-        public TRequest CurrentRequest => CurrentUsedRequest.Request;
+        private UsedRequest _currentUsedRequest;
+        public dynamic CurrentReferenceKey => _currentUsedRequest.ReferenceKey;
+        public TRequest CurrentRequest => _currentUsedRequest.Request;
 
 
         private readonly int _taskLimit;
@@ -98,7 +98,7 @@ namespace AIEssentials
         {
             TRequest requestObject = request.Request;
             dynamic key = request.ReferenceKey;
-            CurrentUsedRequest = request;
+            _currentUsedRequest = request;
             InjectRequest(requestObject);
 #if UNITY_EDITOR
             Debug.Log($"{this.GetHashCode()} - Requesting : {key} - {request}");
@@ -124,7 +124,7 @@ namespace AIEssentials
                 throw new OverflowException("Too many paused tasks.");
 
             TPause pausedTask = DoPauseCurrent();
-            PausedRequest pausedRequest = new PausedRequest(pausedTask,CurrentUsedRequest);
+            PausedRequest pausedRequest = new PausedRequest(pausedTask,_currentUsedRequest);
             PausedTasks.Push(pausedRequest);
             DoRequest(new UsedRequest(request, priorityLevel, requestKey));
         }
@@ -174,10 +174,10 @@ namespace AIEssentials
         private void ResumeTask()
         {
             PausedRequest pausedRequest = PausedTasks.Pop();
-            CurrentUsedRequest = pausedRequest.OnUsedRequest;
+            _currentUsedRequest = pausedRequest.OnUsedRequest;
             TPause paused = pausedRequest.Paused;
             DoResumePaused(paused);
-            Debug.Log($"{this.GetHashCode()} -Resume: {CurrentUsedRequest.ReferenceKey}");
+            Debug.Log($"{this.GetHashCode()} -Resume: {_currentUsedRequest.ReferenceKey}");
         }
 
         protected abstract void DoResumePaused(TPause pausedRequest);
@@ -222,7 +222,7 @@ namespace AIEssentials
                 DoRequest(new UsedRequest(request, priorityLevel, requestKey));
                 return;
             }
-            if ( CurrentUsedRequest.PriorityLevel < priorityLevel)
+            if ( _currentUsedRequest.PriorityLevel < priorityLevel)
             {
                 PauseCurrentAndDoTask(request, priorityLevel, requestKey);
             }
@@ -272,12 +272,11 @@ namespace AIEssentials
         }
 
 
-
-        public struct UsedRequest
+        protected readonly struct UsedRequest
         {
-            public TRequest Request;
-            public int PriorityLevel;
-            public dynamic ReferenceKey;
+            public readonly TRequest Request;
+            public readonly int PriorityLevel;
+            public readonly dynamic ReferenceKey;
 
             public UsedRequest(TRequest request, int priorityLevel, dynamic referenceKey)
             {
@@ -287,9 +286,9 @@ namespace AIEssentials
             }
         }
 
-        public struct PausedRequest
+        protected struct PausedRequest
         {
-            public TPause Paused;
+            public readonly TPause Paused;
             public UsedRequest OnUsedRequest;
 
             public PausedRequest(TPause paused, UsedRequest onUsedRequest)
