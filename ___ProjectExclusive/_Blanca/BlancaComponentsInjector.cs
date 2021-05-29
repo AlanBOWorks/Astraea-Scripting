@@ -16,7 +16,8 @@ namespace Blanca
 
 
         [Title("Path Calculators")]
-        [SerializeField, HideInPlayMode] private VelocityPathCalculator[] _pathCalculators = new VelocityPathCalculator[0];
+        [SerializeField, HideInPlayMode] 
+        private SerializedBlancaPathControls _pathControls = new SerializedBlancaPathControls();
 
 
         [Title("Variables (For Singleton)")]
@@ -29,11 +30,8 @@ namespace Blanca
 
 
             //---- PathCalculators
-            IPathCalculator[] helpers
-                = PathCalculatorsConstructor.FragmentPathCalculators(_pathCalculators, out IPathCalculator mainPathCalculator);
-
-            entity.MainPathCalculator = mainPathCalculator;
-            entity.PathCalculatorsHelpers = helpers;
+            entity.PathControls = _pathControls;
+           
 
             //---- <Section> ---- Animancer
             entity.BodyAnimancer = _bodyAnimancer;

@@ -1,6 +1,4 @@
 ﻿using AIEssentials;
-using Blanca.Actions;
-using Blanca.AIEssentials;
 using FIMSpace.FLook;
 using IKEssentials;
 using KinematicCharacterController;
@@ -39,7 +37,9 @@ namespace Blanca
             TickerHandler ticker = entity.TickerHandler;
 
             //---- Transforms
-            entity.CharacterTransformData = _characterTransformHandler.CharacterTransform;
+            ICharacterTransformData characterTransformData = _characterTransformHandler.CharacterTransform;
+            entity.CharacterTransformData = characterTransformData;
+
 
             //----  Kinematic Motor 
             KinematicMotorHandler motorHandler 
@@ -49,28 +49,42 @@ namespace Blanca
             KinematicDataHandler kinematicDataHandler 
                 = new KinematicDataHandler(kinematicData,motorHandler, _motor.transform);
 
+            //---- Kinematic Controls
+            BlancaVelocityControlHolder velocityControls = 
+                new BlancaVelocityControlHolder(entity.PathControls);
+            BlancaRotationControlHolder rotationControls =
+                new BlancaRotationControlHolder(kinematicData);
+
             //----  Kinematic Motor; Filters
             OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity(motorHandler);
             OnStopFilterRotation onStopFilterRotation = new OnStopFilterRotation(kinematicData, 30f);
             motorHandler.VelocityFilter = onStopFilterVelocity;
             motorHandler.RotationFilter = onStopFilterRotation;
 
+            //---- Kinematic Motor; Final
+            BlancaMotorControl motorControl 
+                = new BlancaMotorControl(motorHandler,velocityControls,rotationControls);
+
             //---- Brain
-            SimpleRequestManager mainTaskManager = new SimpleRequestManager(
-                new BlancaActionStopMoving());
-            SingleTaskManager lookAtTaskManager = new SingleTaskManager();
-            lookAtTaskManager.InjectOnEmptyAction(
-                new BlancaActionDefaultLookAt(lookAtTaskManager));
-            SingleTaskManager handsTaskManager = new SingleTaskManager(); 
+            
             
             //---- IK: Handlers
             HumanoidIKSolver humanoidIkSolver = new HumanoidIKSolver(_bipedIk,_lookAtAnimator,_irisLookAt);
             humanoidIkSolver.SetUpMainHand(parameters.IsLeftMainHand);
             FeetIKHandler feetIkHandler = new FeetIKHandler(_bipedIk);
 
+            //---- IK: Controls
+            BlancaLookAtControlHolder lookAtControls 
+                = new BlancaLookAtControlHolder(characterTransformData,kinematicData);
+            BlancaIKControl ikControls = new BlancaIKControl(
+                characterTransformData,
+                humanoidIkSolver.HeadIkSolver,
+                lookAtControls);
 
             //---- Events
             MovementTrackerEvent movementTrackerEvent = new MovementTrackerEvent(kinematicData);
+
+
 
             //---- <INJECTION: Self Objects> ----
             _motor.CharacterController = motorHandler;
@@ -82,31 +96,28 @@ namespace Blanca
             //---- <INJECTION: Entity> ----
             entity.KinematicData = kinematicData;
             entity.MotorHandler = motorHandler;
-
-
-            entity.MainTaskManager = mainTaskManager;
-            entity.LookAtTaskManager = lookAtTaskManager;
-            entity.HandsTaskManager = handsTaskManager;
+            entity.VelocityControls = velocityControls;
+            entity.RotationControls = rotationControls;
+            entity.LookAtControls = lookAtControls;
 
             entity.HumanoidIkSolver = humanoidIkSolver;
 
             entity.MovementTrackerEvent = movementTrackerEvent;
 
             //---- <INJECTION: Ticker> ----
+            ticker.AddCallbackReceiver(motorControl);
             ticker.AddCallbackReceiver(_characterTransformHandler);
             ticker.AddCallbackReceiver(kinematicDataHandler);
+            ticker.AddCallbackReceiver(ikControls);
 
-            //---- etc
-            humanoidIkSolver.Head.SetWeight(0); //To avoid the ugly: LookAt World(0,0,0)
         }
         
 
 
         private void Start()
         {
-            BlancaEntitySingleton singleton = BlancaEntitySingleton.Instance;
-            BlancaEntity entity = singleton.Entity;
-            entity.MainTaskManager.MoveNext();
+            /*BlancaEntitySingleton singleton = BlancaEntitySingleton.Instance;
+            BlancaEntity entity = singleton.Entity;*/
             Destroy(this);//Free memory since this no longer is needed
         }
 

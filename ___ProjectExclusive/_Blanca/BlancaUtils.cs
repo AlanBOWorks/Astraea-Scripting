@@ -43,7 +43,9 @@ namespace Blanca
         public static IKinematicRotation KinematicRotation;
         public static IKinematicMotorHandler Motor;
         public static IPathCalculator MainPathCalculator;
-        public static IPathCalculator[] HelperCalculators;
+        public static BlancaVelocityControlHolder VelocityControls;
+        public static BlancaRotationControlHolder RotationControls;
+        public static SerializedBlancaPathControls PathControls;
 
         public static IEnumerator<float> _SearchByThresholdOverride(IPathCalculator pathCalculator, Vector3 onPoint, float distanceThreshold)
         {
@@ -82,7 +84,8 @@ namespace Blanca
     /// </summary>
     public static class BlancaUtilsIK
     {
-        public static HumanoidIKSolver HumanoidIkSolver;
+        public static HumanoidIKSolver HumanoidIkSolver = null;
+        public static BlancaLookAtControlHolder LookAtControls = null;
         public static IHeadIKSolver HeadIkSolver => HumanoidIkSolver.HeadIkSolver;
         private static ICharacterTransformData CharacterTransform => BlancaUtilsTransform.CharacterTransform;
         public static IKinematicVelocity Velocity => BlancaUtilsKinematic.KinematicVelocity;
@@ -178,13 +181,4 @@ namespace Blanca
 
     }
 
-    /// <summary>
-    /// <inheritdoc cref="BlancaUtilsTransform"/>
-    /// </summary>
-    public static class BlancaUtilsManagers
-    {
-        public static ITaskManager MainManager; 
-        public static IRequestManagerEnumerator<CoroutineHandle> LookAtManager;
-        public static IRequestManagerEnumerator<CoroutineHandle> HandsManager;
-    }
 }

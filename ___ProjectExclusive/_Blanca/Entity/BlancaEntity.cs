@@ -29,6 +29,11 @@ namespace Blanca
             }
         }
 
+
+
+
+
+
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
         private KinematicMotorHandler _motorHandler = null;
         public KinematicMotorHandler MotorHandler
@@ -40,7 +45,6 @@ namespace Blanca
                 BlancaUtilsKinematic.Motor = value;
             }
         }
-
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
         private KinematicData _kinematicData = null;
         public KinematicData KinematicData
@@ -53,67 +57,48 @@ namespace Blanca
                 BlancaUtilsKinematic.KinematicRotation = _kinematicData;
             }
         }
-
         [TabGroup("Spacial handlers")] 
-        [ShowInInspector, HideInEditorMode]
-        private IPathCalculator _mainPathCalculator = null;
-        public IPathCalculator MainPathCalculator
+        [ShowInInspector]
+        private BlancaVelocityControlHolder _velocityControls;
+        public BlancaVelocityControlHolder VelocityControls
         {
-            get => _mainPathCalculator;
             set
             {
-                _mainPathCalculator = value;
-                BlancaUtilsKinematic.MainPathCalculator = value;
+                _velocityControls = value;
+                BlancaUtilsKinematic.VelocityControls = value;
             }
+            get => _velocityControls;
+        }
+        [TabGroup("Spacial handlers")]
+        [ShowInInspector]
+        private SerializedBlancaPathControls _pathControls;
+        public SerializedBlancaPathControls PathControls
+        {
+            get => _pathControls;
+            set
+            {
+                _pathControls = value;
+                BlancaUtilsKinematic.MainPathCalculator = PathControls.Base;
+                BlancaUtilsKinematic.PathControls = PathControls;
+            }
+        }
+        [TabGroup("Spacial handlers")]
+        [ShowInInspector]
+        private BlancaRotationControlHolder _rotationControls;
+        public BlancaRotationControlHolder RotationControls
+        {
+            set
+            {
+                _rotationControls = value;
+                BlancaUtilsKinematic.RotationControls = value;
+            }
+            get => _rotationControls;
         }
 
-        [ShowInInspector, HideInEditorMode] 
-        private IPathCalculator[] _pathHelpers = null;
-        public IPathCalculator[] PathCalculatorsHelpers
-        {
-            get => _pathHelpers;
-            set
-            {
-                _pathHelpers = value;
-                BlancaUtilsKinematic.HelperCalculators = value;
-            }
-        }
 
 
-        [TabGroup("Brain"), ShowInInspector, HideInEditorMode]
-        public ITaskManager _mainTaskManager = null;
-        [TabGroup("Brain"), ShowInInspector, HideInEditorMode]
-        public IRequestManagerEnumerator<CoroutineHandle> _lookAtTaskManager = null;
-        [TabGroup("Brain"), ShowInInspector, HideInEditorMode]
-        public IRequestManagerEnumerator<CoroutineHandle> _handsTaskManager = null;
 
-        public ITaskManager MainTaskManager
-        {
-            get => _mainTaskManager;
-            set
-            {
-                _mainTaskManager = value;
-                BlancaUtilsManagers.MainManager = value;
-            }
-        }
-        public IRequestManagerEnumerator<CoroutineHandle> LookAtTaskManager
-        {
-            get => _lookAtTaskManager;
-            set
-            {
-                _lookAtTaskManager = value;
-                BlancaUtilsManagers.LookAtManager = value;
-            }
-        }
-        public IRequestManagerEnumerator<CoroutineHandle> HandsTaskManager
-        {
-            get => _handsTaskManager;
-            set
-            {
-                _handsTaskManager = value;
-                BlancaUtilsManagers.HandsManager = value;
-            }
-        }
+
 
 
         [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
@@ -128,10 +113,8 @@ namespace Blanca
         [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
         public EyesBlinkerHandler BlinkerHandler = null;
 
-
         [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
         private HumanoidIKSolver _humanoidIkSolver = null;
-
         public HumanoidIKSolver HumanoidIkSolver
         {
             get => _humanoidIkSolver;
@@ -141,6 +124,20 @@ namespace Blanca
                 BlancaUtilsIK.HumanoidIkSolver = value;
             }
         }
+
+        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        private BlancaLookAtControlHolder _lookAtControls = null;
+        public BlancaLookAtControlHolder LookAtControls
+        {
+            get => _lookAtControls;
+            set
+            {
+                _lookAtControls = value;
+                BlancaUtilsIK.LookAtControls = value;
+
+            }
+        }
+
 
         [TabGroup("Events"), ShowInInspector, HideInEditorMode]
         public MovementTrackerEvent MovementTrackerEvent = null;
@@ -166,5 +163,7 @@ namespace Blanca
 
         [SerializeField, HideInEditorMode, HideInPlayMode, HideInInlineEditors,HideDuplicateReferenceBox]
         public BlancaEntity Entity = new BlancaEntity();
+
+        public static BlancaEntity GetEntity() => Instance.Entity;
     }
 }

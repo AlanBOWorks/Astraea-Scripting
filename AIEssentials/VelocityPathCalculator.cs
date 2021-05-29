@@ -11,8 +11,6 @@ namespace AIEssentials
         {
             base.Start();
             destination = transform.position;
-            maxSpeed = 1;
-            acceleration = 100;
         }
 
         protected override void Update()
