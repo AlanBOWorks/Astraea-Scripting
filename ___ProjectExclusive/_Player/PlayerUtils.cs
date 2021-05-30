@@ -7,23 +7,39 @@ namespace Player
 {
     public static class PlayerUtilsTransform
     {
-        private static readonly PlayerEntity Entity = PlayerEntitySingleton.Instance.Entity;
+        private static IPlayerTransformData _transformData = null;
+        public static IPlayerTransformData TransformData
+        {
+            get => _transformData;
+            set
+            {
+                _transformData = value;
+                HeadTransform = _transformData.Head;
+                BodyTransform = _transformData.MeshRoot;
+            }
+        }
+        public static Transform HeadTransform { get; private set; }
+        public static Transform BodyTransform { get; private set; }
 
-        public static IPlayerTransformData GetTransformData() => Entity.CharacterTransformData;
-        public static Vector3 GetCurrentPosition() => GetTransformData().MeshWorldPosition;
+        public static Vector3 GetCurrentPosition() => TransformData.MeshWorldPosition;
+        public static Vector3 CalculateFormationPosition(Vector2 planeLocalPosition)
+        {
+            Vector3 offSet = BodyTransform.TransformDirection(planeLocalPosition.x, 0, planeLocalPosition.y);
+            return GetCurrentPosition() + offSet;
+        }
     }
 
     public static class PlayerUtilsKinematic
     {
-        private static readonly PlayerEntity _entity = PlayerEntitySingleton.Instance.Entity;
         public static IPathCalculator MainHelper;
 
-        public static KinematicData GetPlayerKinematicData() => _entity.KinematicData;
+        public static PlayerInputData InputData = null;
+        public static KinematicData KinematicData = null;
 
-        public static float CurrentSpeed => GetPlayerKinematicData().CurrentSpeed;
-        public static bool IsPlayerMoving => _entity.InputData.IsMoving;
+        public static float CurrentSpeed => KinematicData.CurrentSpeed;
+        public static bool IsPlayerMoving => InputData.IsMoving;
 
-        public static Vector3 GetPlayerPointOfVelocity() => GetPlayerKinematicData().PointOfDesiredVelocity;
+        public static Vector3 GetPlayerPointOfVelocity() => KinematicData.PointOfDesiredVelocity;
     }
 
     

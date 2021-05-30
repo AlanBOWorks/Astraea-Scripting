@@ -27,7 +27,11 @@ namespace AIEssentials
         bool IsCloseEnough(float distanceThreshold);
         bool HasReachedDestination();
         void SetReachDestinationDistance(float distance);
+    }
 
-
+    public interface IPathCalculatedData
+    {
+        Vector3 FinalSteeringPoint { get; }
+        Vector3 FinalDestinationPoint { get; }
     }
 }

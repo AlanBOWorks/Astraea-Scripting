@@ -9,16 +9,16 @@ using UnityEngine;
 
 namespace Blanca
 {
-    public class BlancaRotationControlHolder : BlancaRotationStructure<IRotationControl>,
-        IRotationControl
+    public class BlancaRotationControlHolder : BlancaRotationStructure<IRotationControl>
     {
         private readonly KinematicData _characterKinematicData;
 
         public BlancaRotationControlHolder(KinematicData data) : base()
         {
             _characterKinematicData = data;
-            Elements.Add(new MovementRotationControl(data));
-            Elements.Add(new TargetRotationControl());
+            MovementRotationControl movementRotationControl = new MovementRotationControl(data);
+            TargetRotationControl targetRotationControl = new TargetRotationControl();
+            AddBasicSetup(movementRotationControl,targetRotationControl);
 
             Timing.RunCoroutine(AddPlayerAfterItsInstantiated());
             IEnumerator<float> AddPlayerAfterItsInstantiated()

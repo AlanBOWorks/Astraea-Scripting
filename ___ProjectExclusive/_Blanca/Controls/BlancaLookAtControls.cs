@@ -14,9 +14,10 @@ namespace Blanca
     {
         public BlancaLookAtControlHolder(ICharacterTransformData transformData, IKinematicVelocity velocity) : base()
         {
-            Elements.Add(new LookAtTarget());
-            Elements.Add(new LookAtMovement(velocity));
-            Elements.Add(new LookAtRandom(transformData.Head, new SRange(1,7)));
+            LookAtTarget lookAtTarget = new LookAtTarget();
+            LookAtMovement lookAtMovement = new LookAtMovement(velocity,3); // watch further in the movement
+            LookAtRandom lookAtRandom = new LookAtRandom(transformData.Head, new SRange(1,7));
+            AddBasicSetup(lookAtTarget,lookAtMovement,lookAtRandom);
 
             Timing.RunCoroutine(WaitUntilPlayerIsInstantiated());
             IEnumerator<float> WaitUntilPlayerIsInstantiated()
@@ -24,7 +25,7 @@ namespace Blanca
                 PlayerEntity playerEntity = PlayerEntitySingleton.Instance.Entity;
                 yield return Timing.WaitUntilTrue(PlayerInstantiated);
                 ICharacterTransformData headData = playerEntity.CharacterTransformData;
-                LookAtHeadData lookAtHead = new LookAtHeadData(headData) {LookAtWeight = 1};
+                LookAtHeadData lookAtHead = new LookAtHeadData(headData);
                 Elements.Add(lookAtHead);
 
                 bool PlayerInstantiated()
@@ -34,14 +35,26 @@ namespace Blanca
             }
         }
 
-        public Vector3 CalculateDirectionToLookAt(Vector3 headReferencePoint)
+        public Vector3 CalculatePointLookAt(Vector3 headReferencePoint)
         {
-            Vector3 targetDirection = Elements[0].CalculateDirectionToLookAt(headReferencePoint);
+            float weightSum = Elements[0].LookAtWeight;
+            Vector3 targetDirection = Elements[0].PointOfLookAt(headReferencePoint);
             for (int i = 1; i < Elements.Count; i++)
             {
-                targetDirection += Elements[i].CalculateDirectionToLookAt(headReferencePoint);
+                DoSum(Elements[i]);
             }
-            return targetDirection;
+
+            if (weightSum == 0) //This is just to avoid divide by 0
+                return headReferencePoint;
+
+            return targetDirection/weightSum;
+
+
+            void DoSum(ILookAtControl control)
+            {
+                weightSum += control.LookAtWeight;
+                targetDirection += control.PointOfLookAt(headReferencePoint);
+            }
         }
     }
 }

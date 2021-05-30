@@ -5,21 +5,22 @@ using AIEssentials;
 using KinematicEssentials;
 using MEC;
 using Player;
+using SharedLibrary;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Blanca
 {
-    public class BlancaVelocityControlHolder : BlancaMovementStructure<IVelocityControl>,
-        IVelocityControl
+    public class BlancaVelocityControlHolder : BlancaMovementStructure<IVelocityControl>
     {
         public BlancaVelocityControlHolder(IBlancaPathStructure<VelocityPathCalculator> pathStructure):
             base()
         {
-            Elements.Add( new PathVelocityControl(pathStructure.Base));
-            Elements.Add(new PathVelocityControl(pathStructure.Lead));
-            Elements.Add(new PathVelocityControl(pathStructure.ToPlayer));
+            PathVelocityControl baseControl = new PathVelocityControl(pathStructure.Base);
+            PathVelocityControl leadControl = new PathVelocityControl(pathStructure.Lead);
+            PathVelocityControl toPlayerControl = new PathVelocityControl(pathStructure.ToPlayer);
+            AddBasicSetup(baseControl,leadControl,toPlayerControl);
 
             Timing.RunCoroutine(AddPlayerAftersItsInstantiated());
             IEnumerator<float> AddPlayerAftersItsInstantiated()
@@ -34,6 +35,7 @@ namespace Blanca
                     return playerEntity.KinematicData != null;
                 }
             }
+
         }
 
 
@@ -49,10 +51,22 @@ namespace Blanca
 
             return targetVelocity * VelocityWeight;
         }
+
+
+
+        public void SetWeights(BlancaVelocityWeight target)
+        {
+            Base.VelocityWeight = target.Base;
+            Lead.VelocityWeight = target.Lead;
+            ToPlayer.VelocityWeight = target.ToPlayer;
+            Copy.VelocityWeight = target.Copy;
+        }
+
     }
 
     [Serializable]
     public class SerializedBlancaPathControls : SerializableBlancaPathStructure<VelocityPathCalculator>
     { }
+
 
 }

@@ -18,20 +18,11 @@ namespace Blanca
     /// </summary>
     public static class BlancaUtilsTransform
     {
-        public static ICharacterTransformData CharacterTransform;
+        public static ICharacterTransformData CharacterTransform = null;
 
-        private static readonly PlayerEntity PlayerEntity = PlayerEntitySingleton.Instance.Entity;
-        public static IPlayerTransformData PlayerTransform => PlayerEntity.CharacterTransformData;
-
-        private static readonly CompanionEntity CompanionEntity = CompanionEntitySingleton.Instance.Entity;
+        public static Vector3 GetCharacterPosition() => CharacterTransform.MeshWorldPosition;
 
 
-        public static float GetDirectDistanceOfPlayer()
-        {
-            return CompanionEntity.DistanceOfSeparation;
-        }
-
-        
     }
 
     /// <summary>
@@ -42,7 +33,6 @@ namespace Blanca
         public static IKinematicVelocity KinematicVelocity;
         public static IKinematicRotation KinematicRotation;
         public static IKinematicMotorHandler Motor;
-        public static IPathCalculator MainPathCalculator;
         public static BlancaVelocityControlHolder VelocityControls;
         public static BlancaRotationControlHolder RotationControls;
         public static SerializedBlancaPathControls PathControls;
@@ -90,7 +80,7 @@ namespace Blanca
         private static ICharacterTransformData CharacterTransform => BlancaUtilsTransform.CharacterTransform;
         public static IKinematicVelocity Velocity => BlancaUtilsKinematic.KinematicVelocity;
 
-        private static IPlayerTransformData PlayerTransform => BlancaUtilsTransform.PlayerTransform;
+        private static IPlayerTransformData PlayerTransform => PlayerUtilsTransform.TransformData;
         public static bool IsLeftHanded() => BlancaEntitySingleton.Instance.Parameters.IsLeftMainHand;
 
         public static void LerpToZero(float speedChange = 1f)

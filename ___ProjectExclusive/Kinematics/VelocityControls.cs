@@ -16,7 +16,7 @@ namespace ___ProjectExclusive
 
     }
 
-    public interface IVelocityControl : IVelocityWeight
+    public interface IVelocityControl : IVelocityWeight, IAccelerationControl
     {
         Vector3 CalculateTargetVelocity();
     }
@@ -24,13 +24,18 @@ namespace ___ProjectExclusive
     {
         [ShowInInspector, DisableInPlayMode]
         public IKinematicVelocity CopyVelocity { set; private get; }
+        private Vector3 _currentCopyVelocity;
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float VelocityWeight { get; set; } = 0;
 
         public Vector3 CalculateTargetVelocity()
         {
-            return CopyVelocity.CurrentVelocity * VelocityWeight;
+            _currentCopyVelocity = Vector3.Lerp(
+                _currentCopyVelocity, 
+                CopyVelocity.CurrentVelocity * VelocityWeight,
+                Time.deltaTime * Acceleration);
+            return _currentCopyVelocity;
         } 
 
         public CopyVelocityControl(IKinematicVelocity copyVelocity)
@@ -38,6 +43,7 @@ namespace ___ProjectExclusive
             CopyVelocity = copyVelocity;
         }
 
+        public float Acceleration { get; set; } = 4;
     }
 
     public class PathVelocityControl : IVelocityControl, IPathDestination
@@ -49,7 +55,6 @@ namespace ___ProjectExclusive
             PathCalculator = pathCalculator;
             VelocityWeight = 0;
         }
-
 
         [ShowInInspector]
         public float Acceleration

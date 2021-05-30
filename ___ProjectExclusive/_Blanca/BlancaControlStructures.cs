@@ -6,16 +6,31 @@ using Object = UnityEngine.Object;
 
 namespace Blanca
 {
-    public interface IBlancaMovementStructure<out T> : IBlancaPathStructure<T>
-    {
-        T Copy { get; }
-    }
-
     public interface IBlancaPathStructure <out T>
     {
         T Base { get; }
         T Lead { get; }
         T ToPlayer { get; }
+    }
+    public interface IBlancaMovementStructure<out T> : IBlancaPathStructure<T>
+    {
+        T Copy { get; }
+    }
+
+    public struct BlancaVelocityWeight
+    {
+        public float Base;
+        public float Lead;
+        public float ToPlayer;
+        public float Copy;
+
+        public BlancaVelocityWeight(float bBase, float lead, float toPlayer, float copy)
+        {
+            Base = bBase;
+            Lead = lead;
+            ToPlayer = toPlayer;
+            Copy = copy;
+        }
     }
 
     public class BlancaMovementStructure<T> : IBlancaMovementStructure<T>
@@ -68,13 +83,20 @@ namespace Blanca
 
         public const int MovementTypesAmount = CopyIndex+1;
 
-        /// <summary>
-        /// Used when it's not sure if the <see cref="Copy"/> element is added;
-        /// </summary>
-        public void SafeAddElement(T element)
+        public void AddBasicSetup(T basePath, T leadPath, T toPlayerPath)
         {
-            if(Elements.Count < MovementTypesAmount) return;
-            Elements.Add(element);
+            if (Elements.Count >= MovementTypesAmount -1)
+            {
+                Base = basePath;
+                Lead = leadPath;
+                ToPlayer = toPlayerPath;
+                return;
+            }
+
+            Elements.Add(basePath);
+            Elements.Add(leadPath);
+            Elements.Add(toPlayerPath);
+
         }
     }
 
@@ -138,14 +160,18 @@ namespace Blanca
         public const int CopyIndex = TargetIndex + 1;
         public const int RotationTypesAmount = CopyIndex + 1;
 
-        /// <summary>
-        /// Used when it's not sure if the <see cref="Copy"/> element is added;
-        /// </summary>
-        public void SafeAddElement(T element)
+        public void AddBasicSetup(T movement, T target)
         {
-            if (Elements.Count < RotationTypesAmount) return;
-            Elements.Add(element);
+            if (Elements.Count >= RotationTypesAmount - 1)
+            {
+                Movement = movement;
+                Target = target;
+                return;
+            }
+            Elements.Add(movement);
+            Elements.Add(target);
         }
+
     }
 
     public abstract class SerializableBlancaRotationStructure<T> : MonoBehaviour, IBlancaRotationStructure<T>
@@ -176,24 +202,28 @@ namespace Blanca
             get => Elements[TargetIndex];
             protected set => Elements[TargetIndex] = value;
         }
+
         [ShowInInspector]
         public T Movement
         {
             get => Elements[MovementIndex];
             protected set => Elements[MovementIndex] = value;
         }
+
         [ShowInInspector]
         public T Random
         {
             get => Elements[RandomIndex];
             protected set => Elements[RandomIndex] = value;
         }
+
         [ShowInInspector]
         public T AtPlayer
         {
             get => Elements[AtPlayerIndex];
             protected set => Elements[AtPlayerIndex] = value;
-        } 
+        }
+
         public List<T> Elements { get; }
 
 
@@ -208,6 +238,7 @@ namespace Blanca
         {
             Elements = new List<T>(LookAtTypesAmount);
         }
+
         public BlancaLookAtStructure(IBlancaLookAtStructure<T> wrapper) : this()
         {
             Elements.Add(wrapper.Target);
@@ -216,9 +247,28 @@ namespace Blanca
             Elements.Add(wrapper.AtPlayer);
         }
 
+        public BlancaLookAtStructure(T target, T movement, T random) : this()
+        {
+            Elements.Add(target);
+            Elements.Add(movement);
+            Elements.Add(random);
+        }
 
+        public void AddBasicSetup(T target, T movement, T random)
+        {
+            if(Elements.Count >= LookAtTypesAmount -1)
+            {
+                Target = target;
+                Movement = movement;
+                Random = random;
+                return;
+            }
+            Elements.Add(target);
+            Elements.Add(movement);
+            Elements.Add(random);
+        }
     }
-    
+
     public abstract class SerializableBlancaLookAtStructure<T> : MonoBehaviour, IBlancaLookAtStructure<T>
     {
         [SerializeField] private T _target;

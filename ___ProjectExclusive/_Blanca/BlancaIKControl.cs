@@ -24,10 +24,10 @@ namespace Blanca
         public void Tick()
         {
             Vector3 headPosition = _characterTransform.HeadPosition;
-            Vector3 directionToLookAt = _lookAtControls.CalculateDirectionToLookAt(headPosition);
+            Vector3 pointLookAt = _lookAtControls.CalculatePointLookAt(headPosition);
             Vector3 smallForward = _characterTransform.MeshForward * .2f;
 
-            _headIkSolver.SetTarget(headPosition + directionToLookAt + smallForward);
+            _headIkSolver.SetTarget(pointLookAt + smallForward);
         }
     }
 }

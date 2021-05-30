@@ -15,7 +15,7 @@ namespace IKEssentials
 
     public interface ILookAtControl : ILookAtWeight
     {
-        Vector3 CalculateDirectionToLookAt(Vector3 headReferencePoint);
+        Vector3 PointOfLookAt(Vector3 headReferencePoint);
     }
 
 
@@ -25,11 +25,9 @@ namespace IKEssentials
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float LookAtWeight { get; set; }
-        public Vector3 CalculateDirectionToLookAt(Vector3 headReferencePoint)
+        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
         {
-            Vector3 direction = TargetPoint - headReferencePoint;
-            direction.Normalize();
-            return direction * LookAtWeight;
+            return Vector3.LerpUnclamped(Vector3.zero, TargetPoint, LookAtWeight);
         }
 
         private CoroutineHandle _trackHandle;
@@ -58,19 +56,20 @@ namespace IKEssentials
     public class LookAtMovement : ILookAtControl
     {
         public IKinematicVelocity Velocity { set; private get; }
-
-        public LookAtMovement(IKinematicVelocity velocity)
+        public float MagnitudeModifier;
+        public LookAtMovement(IKinematicVelocity velocity, float magnitudeModifier)
         {
             Velocity = velocity;
+            MagnitudeModifier = magnitudeModifier;
         }
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float LookAtWeight { get; set; }
-        public Vector3 CalculateDirectionToLookAt(Vector3 headReferencePoint)
+        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
         {
-            Vector3 direction = Velocity.DesiredVelocity;
-            direction.Normalize();
-            return direction * LookAtWeight;
+            Vector3 targetPoint = headReferencePoint + Velocity.DesiredVelocity * MagnitudeModifier;
+            return Vector3.LerpUnclamped(Vector3.zero, targetPoint, LookAtWeight);
+
         }
     }
 
@@ -90,10 +89,11 @@ namespace IKEssentials
         [ShowInInspector, PropertyRange(-10, 10)]
         public float LookAtWeight { get; set; }
         private Vector3 _currentDirection;
-        public Vector3 CalculateDirectionToLookAt(Vector3 headReferencePoint)
+        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
         {
-            _currentDirection.Normalize();
-            return _currentDirection * LookAtWeight;
+            Vector3 targetPoint = headReferencePoint + _currentDirection;
+            return Vector3.LerpUnclamped(Vector3.zero, targetPoint, LookAtWeight);
+
         }
 
         private IEnumerator<float> DoRandomVariation()
@@ -117,11 +117,10 @@ namespace IKEssentials
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float LookAtWeight { get; set; }
-        public Vector3 CalculateDirectionToLookAt(Vector3 headReferencePoint)
+        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
         {
-            Vector3 direction = LookAtHead.HeadPosition - headReferencePoint;
-            direction = Vector3.ClampMagnitude(direction,1);
-            return direction * LookAtWeight;
+            Vector3 targetPoint = LookAtHead.HeadPosition;
+            return Vector3.LerpUnclamped(Vector3.zero, targetPoint, LookAtWeight);
         }
     }
 

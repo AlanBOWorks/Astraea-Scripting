@@ -22,16 +22,38 @@ namespace Player
             {
                 _playerTransformData = value;
                 PlayerEntitySingleton.Instance.TransformData.Injection(value);
+                PlayerUtilsTransform.TransformData = value;
             }
         }
 
         [TabGroup("Input"), ShowInInspector, HideInEditorMode]
-        public PlayerInputData InputData = null;
+        private PlayerInputData _inputData = null;
+        public PlayerInputData InputData
+        {
+            get => _inputData;
+            set
+            {
+                _inputData = value;
+                PlayerUtilsKinematic.InputData = value;
+            }
+        }
+
 
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
         public IKinematicMotorHandler MotorHandler = null;
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
-        public KinematicData KinematicData = null;
+        private KinematicData _kinematicData = null;
+        public KinematicData KinematicData
+        {
+            get => _kinematicData;
+            set
+            {
+                _kinematicData = value;
+                PlayerUtilsKinematic.KinematicData = value;
+            }
+        }
+
+
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
         private IPathCalculator _mainPathHelper = null;
         public IPathCalculator MainPathHelper

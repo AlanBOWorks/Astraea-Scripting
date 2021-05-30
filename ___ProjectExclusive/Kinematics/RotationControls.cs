@@ -10,7 +10,7 @@ namespace ___ProjectExclusive
         float RotationWeight { get; set; }
     }
 
-    public interface IRotationControl : IRotationWeight
+    public interface IRotationControl : IRotationWeight, IAccelerationControl
     {
         Vector3 CalculateForwardEuler();
     }
@@ -26,10 +26,18 @@ namespace ___ProjectExclusive
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float RotationWeight { get; set; } = 0;
+
+        private Vector3 _currentCalculation;
         public Vector3 CalculateForwardEuler()
         {
-            return _velocity.CurrentVelocity * RotationWeight;
+            _currentCalculation = Vector3.Lerp(
+                _currentCalculation, 
+                _velocity.CurrentVelocity * RotationWeight,
+                Time.deltaTime * Acceleration);
+            return _currentCalculation;
         }
+
+        public float Acceleration { get; set; } = 4f;
     }
 
     public class TargetRotationControl : IRotationControl
@@ -39,10 +47,18 @@ namespace ___ProjectExclusive
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float RotationWeight { get; set; }
+
+        private Vector3 _currentCalculation;
         public Vector3 CalculateForwardEuler()
         {
-            return TargetRotationForward * RotationWeight;
+            _currentCalculation = Vector3.Lerp(
+                _currentCalculation,
+                TargetRotationForward * RotationWeight,
+                Time.deltaTime * Acceleration);
+            return _currentCalculation;
         }
+
+        public float Acceleration { get; set; } = 4f;
     }
 
     public class CopyCharacterRotationControl : IRotationControl
@@ -55,9 +71,16 @@ namespace ___ProjectExclusive
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float RotationWeight { get; set; }
+        private Vector3 _currentCalculation;
         public Vector3 CalculateForwardEuler()
         {
-            return _copyData.MeshForward * RotationWeight;
+            _currentCalculation = Vector3.Lerp(
+                _currentCalculation,
+                _copyData.MeshForward * RotationWeight,
+                Time.deltaTime * Acceleration);
+            return _currentCalculation;
         }
+
+        public float Acceleration { get; set; } = 2f;
     }
 }

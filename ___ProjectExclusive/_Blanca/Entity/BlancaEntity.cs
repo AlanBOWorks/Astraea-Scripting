@@ -78,7 +78,6 @@ namespace Blanca
             set
             {
                 _pathControls = value;
-                BlancaUtilsKinematic.MainPathCalculator = PathControls.Base;
                 BlancaUtilsKinematic.PathControls = PathControls;
             }
         }
