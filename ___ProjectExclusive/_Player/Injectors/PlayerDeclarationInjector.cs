@@ -14,18 +14,17 @@ namespace Player
     public class PlayerDeclarationInjector : MonoInjector
     {
         [Title("References")]
-        [SerializeField, HideInPlayMode] private KinematicCharacterMotor _motor = null;
-        [SerializeField, HideInPlayMode] private PlayerBodyRotationOnLimits _rotationOnLimits = null;
-        [SerializeField, HideInPlayMode] private FullBodyBipedIK _biped = null;
+        [SerializeField] private KinematicCharacterMotor _motor = null;
+        [SerializeField] private PlayerBodyRotationHandler rotationHandler = null;
+        [SerializeField] private FullBodyBipedIK _biped = null;
+        [SerializeField] private IKFeetHandler _ikFeetHandler = null;
 
         [Title("Transform")]
-        [SerializeField, HideInPlayMode] private PlayerTransformHandler _playerTransformHandler = new PlayerTransformHandler();
+        [SerializeField] private PlayerTransformHandler _playerTransformHandler = new PlayerTransformHandler();
 
         [Title("Inputs")] 
         [SerializeField] private PlayerInputHandler _inputHandler = new PlayerInputHandler();
-        [SerializeField] private InputRotation _inputRotation = new InputRotation();
-
-
+        [SerializeField] private InputRotation _inputRotation = new InputRotation(); //this rotates the camera
 
 
         public override void DoInjection()
@@ -42,17 +41,18 @@ namespace Player
             //----  Kinematic Motor 
             KinematicMotorHandler motorHandler
                 = new KinematicMotorHandler(_motor, parameters);
-            KinematicData kinematicData
+            KinematicData rawKinematicData
                 = new KinematicData();
             KinematicDataHandler kinematicDataHandler
-                = new KinematicDataHandler(kinematicData, motorHandler, playerTransform.MeshRoot);
+                = new KinematicDataHandler(rawKinematicData, motorHandler, playerTransform.MeshRoot);
+            // This is because the player's rotation is based in the camera instead of the player's transform.root
+            ComposedKinematicData playerKinematicData = new ComposedKinematicData(rawKinematicData,rotationHandler);
 
             //----  Kinematic Motor; Filters
-            OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity(motorHandler);
-            motorHandler.VelocityFilter = onStopFilterVelocity;
+            OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity();
+            motorHandler.VelocityFilters.Enqueue(onStopFilterVelocity);
 
             //---- IKs
-            FeetIKHandler feetIkHandler = new FeetIKHandler(_biped);
 
             //---- Inputs
             _inputHandler.Injection(playerTransform);
@@ -62,18 +62,20 @@ namespace Player
 
 
             //---- Events
-            MovementTrackerEvent movementTrackerEvent = new MovementTrackerEvent(kinematicData);
-
+            //Uses the raw version because it's 'faster', but it could use the composed one as well
+            MovementTrackerEvent movementTrackerEvent = new MovementTrackerEvent(rawKinematicData);
 
             //---- <INJECTION: Self Objects> ----
             _motor.CharacterController = motorHandler;
-            _rotationOnLimits.Injection(playerTransform,inputData);
+            rotationHandler.Injection(playerTransform,inputData);
 
             movementTrackerEvent.AddShortListener(onStopFilterVelocity);
-            movementTrackerEvent.AddListener(feetIkHandler);
+            movementTrackerEvent.AddListener(_ikFeetHandler);
+
+            rotationHandler.AddListener(_ikFeetHandler);
 
             //---- <INJECTION: Entity> ----
-            entity.KinematicData = kinematicData;
+            entity.KinematicData = playerKinematicData;
             entity.MotorHandler = motorHandler;
             entity.InputData = _inputHandler.InputData;
             entity.MovementTrackerEvent = movementTrackerEvent;

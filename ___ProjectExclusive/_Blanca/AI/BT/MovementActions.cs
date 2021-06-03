@@ -5,36 +5,41 @@ using NodeCanvas.Framework;
 using NodeCanvas.Tasks.Actions;
 using ParadoxNotion.Design;
 using Player;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Blanca
 {
-    [Name("Go to Transform [Blanca]")]
-    [Category("___ Blanca ___")]
-    [Description("Makes Blanca go to the target Transform")]
-    public class BlancaGoToTransform : ActionTask
+    [Name("Move until reach Path\n [M - Blanca]")]
+    [Category("___ Blanca ___/Movement")]
+    [Description("Sets the path weights for Blanca movement until it reaches the destination")]
+    public class BlancaEnablePathMovement : ActionTask
     {
-        public Transform TargetPoint;
-        public float DistanceThreshold = .1f;
+        protected override string info => $"Move until reach Path.\n<b>[ {TargetPathfinder} ]</b>";
+
+        private IPathCalculator _usingPath;
+        [HideInPlayMode]
+        public BlancaPathStructure.Types TargetPathfinder 
+            = BlancaPathStructure.Types.Base;
+
+
+        protected override string OnInit()
+        {
+            _usingPath =
+                BlancaUtilsKinematic.PathControls.GetElement(TargetPathfinder);
+            return base.OnInit();
+        }
 
         protected override void OnExecute()
         {
            SetControlWeights(1);
-
-            IPathCalculator pathCalculator =
-                BlancaUtilsKinematic.PathControls.Base;
-            pathCalculator.SetDestination(TargetPoint.position);
-            pathCalculator.SetReachDestinationDistance(DistanceThreshold);
+           
         }
 
 
         protected override void OnUpdate()
         {
-            IPathCalculator pathCalculator =
-                BlancaUtilsKinematic.PathControls.Base;
-            pathCalculator.SetDestination(TargetPoint.position);
-
-            if(pathCalculator.HasReachedDestination())
+            if(_usingPath.HasReachedDestination())
                 EndAction(true);
         }
 
@@ -56,9 +61,10 @@ namespace Blanca
         }
     }
 
-    [Name("Go to Formation [Blanca]")]
-    [Category("___ Blanca ___")]
-    [Description("Moves Blanca to the local Formation Point")]
+    [Name("Until being in Formation\n [D&M - Blanca]")]
+    [Category("___ Blanca ___/Destination & Movement")]
+    [Description("(Just) Moves Blanca to the local Formation Point and returns success on " +
+                 "close enough [Distance threshold]")]
     public class BlancaToFormation : ActionTask
     {
         public Vector2 FormationPosition = new Vector2(.2f,.1f);
@@ -129,6 +135,10 @@ namespace Blanca
         }
     }
 
+    [Name("Remain in Formation\n [D&M - Blanca]")]
+    [Category("___ Blanca ___/Destination & Movement")]
+    [Description("Makes Blanca go to the formation, except it only returns running. " +
+                 "(It should be exit by other means)")]
     public class BlancaRemainInFormation : BlancaToFormation
     {
         protected override void OnExecute()
@@ -157,23 +167,17 @@ namespace Blanca
         }
     }
 
-    [Name("Lead to Target [Blanca]")]
-    [Category("___ Blanca ___")]
-    [Description("Leads player towards a target (fails if too far)")]
+    [Name("Until Lead to Target\n [M - Blanca]")]
+    [Category("___ Blanca ___/Movement")]
+    [Description("Enables Lead Movement and check if is too far (returns [Fail] if so)")]
     public class BlancaLeadToPoint : ActionTask
     {
-        public Transform TargetPoint;
-        public float DistanceThreshold = .1f;
         public float SeparationThreshold = 2f;
 
         protected override void OnExecute()
         {
             SetControlWeights(1);
 
-            IPathCalculator pathCalculator =
-                BlancaUtilsKinematic.PathControls.Lead;
-            pathCalculator.SetDestination(TargetPoint.position);
-            pathCalculator.SetReachDestinationDistance(DistanceThreshold);
         }
 
 
@@ -181,7 +185,6 @@ namespace Blanca
         {
             IPathCalculator pathCalculator =
                 BlancaUtilsKinematic.PathControls.Lead;
-            pathCalculator.SetDestination(TargetPoint.position);
 
             if (pathCalculator.HasReachedDestination())
                 EndAction(true);

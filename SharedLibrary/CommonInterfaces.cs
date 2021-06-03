@@ -30,6 +30,12 @@ namespace SharedLibrary
         Transform Head { get; }
         [ShowInInspector, HideInEditorMode, DisableInPlayMode]
         Vector3 HeadPosition { get; }
+
+        [ShowInInspector, HideInEditorMode, DisableInPlayMode]
+        Transform Pelvis { get; }
+
+        Vector3 PelvisPosition { get; }
+
     }
 
     public interface ITicker

@@ -7,6 +7,7 @@ using RootMotion.FinalIK;
 using SharedLibrary;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Blanca
 {
@@ -14,18 +15,27 @@ namespace Blanca
     public class BlancaDeclareInjector : MonoInjector
     {
         [Title("References")]
-        [SerializeField, HideInPlayMode] private KinematicCharacterMotor _motor = null;
+        [SerializeField] private KinematicCharacterMotor _motor = null;
 
         [Title("Transforms")] 
-        [SerializeField, HideInPlayMode]
+        [SerializeField]
         private CharacterTransformHandler _characterTransformHandler = new CharacterTransformHandler();
 
         [Title("IK Handlers")] 
-        [SerializeField, HideInPlayMode] private FullBodyBipedIK _bipedIk = null;
-        [SerializeField, HideInPlayMode] private FLookAnimator _lookAtAnimator = null;
-        [SerializeField, HideInPlayMode] private IrisLookAt _irisLookAt = null;
+        [SerializeField] private FullBodyBipedIK _bipedIk = null;
+        [SerializeField] private FLookAnimator _lookAtAnimator = null;
+        [SerializeField] private IrisLookAt _irisLookAt = null;
+        [SerializeField] private IKFeetHandler _ikFeetHandler = null;
 
+        [Title("Transforms")]
+        [SerializeField] 
+        private BlancaPersonality personality = new BlancaPersonality();
 
+        [Title("Parameters")] 
+        [SerializeField]
+        private CurveRotationFilter curveRotationFilter = new CurveRotationFilter();
+        [SerializeField, Range(-1,1)] 
+        private float rotationTriggerDotThreshold = .4f;
 
         public override void DoInjection()
         {
@@ -56,10 +66,13 @@ namespace Blanca
                 new BlancaRotationControlHolder(kinematicData);
 
             //----  Kinematic Motor; Filters
-            OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity(motorHandler);
+            OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity();
             OnStopFilterRotation onStopFilterRotation = new OnStopFilterRotation(kinematicData, 30f);
-            motorHandler.VelocityFilter = onStopFilterVelocity;
-            motorHandler.RotationFilter = onStopFilterRotation;
+
+            motorHandler.VelocityFilters.Enqueue(onStopFilterVelocity);
+
+            motorHandler.RotationFilters.Enqueue(onStopFilterRotation);
+            motorHandler.RotationFilters.Enqueue(curveRotationFilter);
 
             //---- Kinematic Motor; Final
             BlancaMotorControl motorControl 
@@ -71,7 +84,6 @@ namespace Blanca
             //---- IK: Handlers
             HumanoidIKSolver humanoidIkSolver = new HumanoidIKSolver(_bipedIk,_lookAtAnimator,_irisLookAt);
             humanoidIkSolver.SetUpMainHand(parameters.IsLeftMainHand);
-            FeetIKHandler feetIkHandler = new FeetIKHandler(_bipedIk);
 
             //---- IK: Controls
             BlancaLookAtControlHolder lookAtControls 
@@ -81,8 +93,12 @@ namespace Blanca
                 humanoidIkSolver.HeadIkSolver,
                 lookAtControls);
 
+            //---- Emotions
+            BlancaEmotionsData emotionsData = new BlancaEmotionsData(personality);
+
             //---- Events
             MovementTrackerEvent movementTrackerEvent = new MovementTrackerEvent(kinematicData);
+            RotationTrackerEvent rotationTrackerEvent = new RotationTrackerEvent(kinematicData, rotationTriggerDotThreshold);
 
 
 
@@ -90,8 +106,9 @@ namespace Blanca
             _motor.CharacterController = motorHandler;
 
             movementTrackerEvent.AddShortListener(onStopFilterVelocity);
-            movementTrackerEvent.AddListener(feetIkHandler);
+            movementTrackerEvent.AddListener(_ikFeetHandler);
 
+            rotationTrackerEvent.AddListener(_ikFeetHandler);
 
             //---- <INJECTION: Entity> ----
             entity.KinematicData = kinematicData;
@@ -102,7 +119,10 @@ namespace Blanca
 
             entity.HumanoidIkSolver = humanoidIkSolver;
 
+            entity.EmotionsData = emotionsData;
+
             entity.MovementTrackerEvent = movementTrackerEvent;
+            entity.RotationTrackerEvent = rotationTrackerEvent;
 
             //---- <INJECTION: Ticker> ----
             ticker.AddCallbackReceiver(motorControl);

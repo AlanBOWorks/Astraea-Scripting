@@ -23,7 +23,7 @@ namespace Player
             PlayerEntity entity = PlayerEntitySingleton.Instance.Entity;
             AnimancerComponent bodyAnimancer = entity.BodyAnimancer;
             TickerHandler ticker = entity.TickerHandler;
-            KinematicData kinematicData = entity.KinematicData;
+            IKinematicData kinematicData = entity.KinematicData;
 
 
             //---- Animancer

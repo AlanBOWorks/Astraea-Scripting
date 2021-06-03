@@ -4,6 +4,7 @@ using AIEssentials;
 using Animancer;
 using AnimancerEssentials;
 using Animators;
+using Companion;
 using IKEssentials;
 using KinematicEssentials;
 using MEC;
@@ -16,7 +17,7 @@ namespace Blanca
     [Serializable]
     public class BlancaEntity
     {
-        [TabGroup("Transform"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Transform","Transform"), ShowInInspector, HideInEditorMode]
         private ICharacterTransformData _characterTransformData = null;
         public ICharacterTransformData CharacterTransformData
         {
@@ -28,13 +29,9 @@ namespace Blanca
                 BlancaUtilsTransform.CharacterTransform = value;
             }
         }
+        
 
-
-
-
-
-
-        [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Transform", "Spacial handlers"), ShowInInspector, HideInEditorMode]
         private KinematicMotorHandler _motorHandler = null;
         public KinematicMotorHandler MotorHandler
         {
@@ -45,7 +42,7 @@ namespace Blanca
                 BlancaUtilsKinematic.Motor = value;
             }
         }
-        [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Transform", "Spacial handlers"), ShowInInspector, HideInEditorMode]
         private KinematicData _kinematicData = null;
         public KinematicData KinematicData
         {
@@ -57,7 +54,7 @@ namespace Blanca
                 BlancaUtilsKinematic.KinematicRotation = _kinematicData;
             }
         }
-        [TabGroup("Spacial handlers")] 
+        [TabGroup("Transform", "Spacial handlers")] 
         [ShowInInspector]
         private BlancaVelocityControlHolder _velocityControls;
         public BlancaVelocityControlHolder VelocityControls
@@ -69,7 +66,7 @@ namespace Blanca
             }
             get => _velocityControls;
         }
-        [TabGroup("Spacial handlers")]
+        [TabGroup("Transform", "Spacial handlers")]
         [ShowInInspector]
         private SerializedBlancaPathControls _pathControls;
         public SerializedBlancaPathControls PathControls
@@ -81,7 +78,7 @@ namespace Blanca
                 BlancaUtilsKinematic.PathControls = PathControls;
             }
         }
-        [TabGroup("Spacial handlers")]
+        [TabGroup("Transform", "Spacial handlers")]
         [ShowInInspector]
         private BlancaRotationControlHolder _rotationControls;
         public BlancaRotationControlHolder RotationControls
@@ -100,19 +97,19 @@ namespace Blanca
 
 
 
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "Animancer"), ShowInInspector, HideInEditorMode]
         public AnimancerComponent BodyAnimancer = null;
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "Animancer"), ShowInInspector, HideInEditorMode]
         public AnimancerHumanoidLayers AnimancerHumanoidLayers = null;
        
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "Animancer"), ShowInInspector, HideInEditorMode]
         public AnimancerComponent FacialAnimancer = null;
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "Animancer"), ShowInInspector, HideInEditorMode]
         public AnimancerFacialLayers AnimancerFacialLayers = null;
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "Animancer"), ShowInInspector, HideInEditorMode]
         public EyesBlinkerHandler BlinkerHandler = null;
 
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "IK"), ShowInInspector, HideInEditorMode]
         private HumanoidIKSolver _humanoidIkSolver = null;
         public HumanoidIKSolver HumanoidIkSolver
         {
@@ -124,7 +121,7 @@ namespace Blanca
             }
         }
 
-        [TabGroup("Visual handlers"), ShowInInspector, HideInEditorMode]
+        [TabGroup("Visual handlers", "IK"), ShowInInspector, HideInEditorMode]
         private BlancaLookAtControlHolder _lookAtControls = null;
         public BlancaLookAtControlHolder LookAtControls
         {
@@ -137,9 +134,18 @@ namespace Blanca
             }
         }
 
+        [TabGroup("Events", "Emotion handlers"), ShowInInspector, HideInEditorMode]
+        private BlancaEmotionsData _emotionsData = null;
+        public BlancaEmotionsData EmotionsData
+        {
+            get => _emotionsData;
+            set => _emotionsData = value;
+        }
 
-        [TabGroup("Events"), ShowInInspector, HideInEditorMode]
+
+        [TabGroup("Events","Movement"), ShowInInspector, HideInEditorMode]
         public MovementTrackerEvent MovementTrackerEvent = null;
+        public RotationTrackerEvent RotationTrackerEvent = null;
 
         [Title("Ticker"), ShowInInspector, HideInEditorMode]
         public TickerHandler TickerHandler = null;

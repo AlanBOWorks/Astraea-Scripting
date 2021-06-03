@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using IKEssentials;
+using SharedLibrary;
+using UnityEngine;
 
 namespace Companion
 {
@@ -7,10 +10,8 @@ namespace Companion
         [SerializeField] 
         private MainCharactersSpawner _spawner = new MainCharactersSpawner();
 
-        [SerializeField]
-        private CompanionEntityCallEvent _caller = new CompanionEntityCallEvent();
+        [SerializeField] private CompanionEntityScriptableBehaviour behaviourHolder = null;
 
-        // Start is called before the first frame update
         void Awake()
         {
             _spawner.Spawn();
@@ -18,7 +19,7 @@ namespace Companion
 
         private void Start()
         {
-            _caller.DoCall();
+            behaviourHolder.CallForCompanionEntityInitialization();
         }
 
     }

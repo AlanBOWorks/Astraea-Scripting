@@ -39,19 +39,19 @@ namespace KinematicEssentials
 
         [ShowInInspector,DisableInEditorMode,DisableInPlayMode]
         private IKinematicVelocity _trackingVelocity;
-        public MovementTrackerEvent(IKinematicVelocity velocity, bool debugChanges = false)
+        public MovementTrackerEvent(IKinematicVelocity velocity)
         {
             _shortMovementEvents = new List<IShortMovementEvent>(4) {this};
             _longMovementEvents = new List<ILongMovementEvent>(4) {this};
 
-#if UNITY_EDITOR
-            if (debugChanges)
+            /*
+            //Debug changes
             {
                 DebugMovementEvent debugMovementEvent = new DebugMovementEvent();
                 _shortMovementEvents.Add(debugMovementEvent);
                 _longMovementEvents.Add(debugMovementEvent);
             }
-#endif          
+            */
 
             _trackingVelocity = velocity;
             InvokeSwitchToMoveState(); //this call is not done in the first Coroutine call, so this is done here instead
@@ -77,24 +77,9 @@ namespace KinematicEssentials
             }
         }
 
-        private void InvokeSwitchToMoveState()
-        {
-            foreach (IShortMovementEvent listener in _shortMovementEvents)
-            {
-                listener.SwitchToMoveState(_currentSpeed);
-            }
-        }
-
-        private void InvokeSwitchToStopState()
-        {
-            foreach (IShortMovementEvent listener in _shortMovementEvents)
-            {
-                listener.SwitchToStopState(_currentSpeed);
-            }
-        }
 
         private const float SpeedThreshold = .001f;
-        private CoroutineHandle _movementCheckHandle;
+        private readonly CoroutineHandle _movementCheckHandle;
         private float _currentSpeed;
         private IEnumerator<float> _CheckForMovement()
         {
@@ -118,6 +103,22 @@ namespace KinematicEssentials
 
                 }
 
+            }
+        }
+
+        private void InvokeSwitchToMoveState()
+        {
+            foreach (IShortMovementEvent listener in _shortMovementEvents)
+            {
+                listener.SwitchToMoveState(_currentSpeed);
+            }
+        }
+
+        private void InvokeSwitchToStopState()
+        {
+            foreach (IShortMovementEvent listener in _shortMovementEvents)
+            {
+                listener.SwitchToStopState(_currentSpeed);
             }
         }
 

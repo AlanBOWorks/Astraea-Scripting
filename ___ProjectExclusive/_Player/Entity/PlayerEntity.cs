@@ -2,6 +2,7 @@
 using AIEssentials;
 using Animancer;
 using AnimancerEssentials;
+using Companion;
 using KinematicEssentials;
 using PlayerEssentials;
 using SharedLibrary;
@@ -42,8 +43,8 @@ namespace Player
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
         public IKinematicMotorHandler MotorHandler = null;
         [TabGroup("Spacial handlers"), ShowInInspector, HideInEditorMode]
-        private KinematicData _kinematicData = null;
-        public KinematicData KinematicData
+        private IKinematicData _kinematicData = null;
+        public IKinematicData KinematicData
         {
             get => _kinematicData;
             set

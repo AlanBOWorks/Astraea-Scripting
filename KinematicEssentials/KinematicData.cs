@@ -5,7 +5,32 @@ using UnityEngine;
 
 namespace KinematicEssentials
 {
-    public class KinematicData : IKinematicVelocity, IKinematicRotation
+    public interface IKinematicData : IKinematicVelocity, IKinematicRotation { }
+
+    public class ComposedKinematicData : IKinematicData
+    {
+        public readonly IKinematicVelocity Velocity;
+        public readonly IKinematicRotation Rotation;
+
+        public ComposedKinematicData(IKinematicVelocity velocity, IKinematicRotation rotation)
+        {
+            Velocity = velocity;
+            Rotation = rotation;
+        }
+
+
+        public Vector3 CurrentVelocity => Velocity.CurrentVelocity;
+        public Vector3 DesiredVelocity => Velocity.DesiredVelocity;
+        public Vector2 CurrentLocalPlanarVelocity => Velocity.CurrentLocalPlanarVelocity;
+        public float DesiredSpeed => Velocity.DesiredSpeed;
+        public float CurrentSpeed => Velocity.CurrentSpeed;
+
+        public Vector3 NormalizedCurrentRotationForward => Rotation.NormalizedCurrentRotationForward;
+        public Quaternion CurrentRotation => Rotation.CurrentRotation;
+        public Vector3 NormalizedDesiredRotationForward => Rotation.NormalizedDesiredRotationForward;
+    }
+
+    public class KinematicData : IKinematicData, IKinematicRotation
     {
         [ShowInInspector,DisableInPlayMode,DisableInEditorMode]
         public Vector3 CurrentVelocity { get; private set; }
@@ -24,10 +49,14 @@ namespace KinematicEssentials
         public Quaternion CurrentRotation { get; private set; }
 
         [ShowInInspector,DisableInPlayMode,DisableInEditorMode]
-        public Vector3 CurrentRotationForward { get; private set; }
+        private Vector3 CurrentRotationForward { get; set; }
+
+        public Vector3 NormalizedCurrentRotationForward { get; private set; }
 
         [ShowInInspector,DisableInPlayMode,DisableInEditorMode]
-        public Vector3 DesiredGlobalRotationForward { get; private set; }
+        private Vector3 DesiredRotationForward { get; set; }
+
+        public Vector3 NormalizedDesiredRotationForward { get; private set; }
 
         public Vector3 NormalizedGlobalVelocity { get; private set; }
 
@@ -44,9 +73,11 @@ namespace KinematicEssentials
             CurrentVelocity = motorHandler.DesiredVelocity;
             CurrentRotation = motorHandler.CurrentRotation;
             CurrentRotationForward = motorHandler.CurrentRotationForward;
+            NormalizedCurrentRotationForward = CurrentRotationForward.normalized;
 
             DesiredVelocity = motorHandler.DesiredVelocity;
-            DesiredGlobalRotationForward = motorHandler.DesiredRotationForward;
+            DesiredRotationForward = motorHandler.DesiredRotationForward;
+            NormalizedDesiredRotationForward = DesiredRotationForward.normalized;
 
             _localVelocity = referenceTransform.InverseTransformDirection(CurrentVelocity);
             CurrentLocalPlanarVelocity = new Vector2(_localVelocity.x,_localVelocity.z);
@@ -94,11 +125,15 @@ namespace KinematicEssentials
         float CurrentSpeed { get; }
     }
 
-    public interface IKinematicRotation
+    public interface IKinematicRotation : IKinematicNormalizedRotation
     {
         Quaternion CurrentRotation { get; }
-        Vector3 CurrentRotationForward { get; }
+        Vector3 NormalizedDesiredRotationForward { get; }
+    }
 
-        Vector3 DesiredGlobalRotationForward { get; }
+    public interface IKinematicNormalizedRotation
+    {
+        Vector3 NormalizedCurrentRotationForward { get; }
+
     }
 }

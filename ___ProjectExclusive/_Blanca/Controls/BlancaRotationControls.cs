@@ -43,7 +43,7 @@ namespace Blanca
         public Vector3 CalculateForwardEuler()
         {
             //Small forward for avoid zero vector
-            Vector3 smallForward = _characterKinematicData.CurrentRotationForward * .1f;
+            Vector3 smallForward = _characterKinematicData.NormalizedCurrentRotationForward * .1f;
             Vector3 elementsForward = Elements[0].CalculateForwardEuler();
             for (var i = 1; i < Elements.Count; i++)
             {

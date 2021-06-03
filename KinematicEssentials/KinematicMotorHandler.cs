@@ -1,4 +1,5 @@
-﻿using KinematicCharacterController;
+﻿using System.Collections.Generic;
+using KinematicCharacterController;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utility;
@@ -9,15 +10,13 @@ namespace KinematicEssentials
     {
         public readonly KinematicCharacterMotor Motor;
         public ICharacterGravity CharacterGravity;
-        public IKinematicVelocityFilter VelocityFilter;
-        public IKinematicRotationFilter RotationFilter;
+        /// <summary>
+        /// The order of the Queue is the order of priority of execution
+        /// </summary>
+        public readonly Queue<IKinematicVelocityFilter> VelocityFilters;
+        public readonly Queue<IKinematicRotationFilter> RotationFilters;
 
-        public void ChangeAllFilters(IKinematicMotorFilter motorFilter)
-        {
-            VelocityFilter = motorFilter;
-            RotationFilter = motorFilter;
-        }
-
+        private const int PredictedAmountOfFilters = 4;
         public Vector3 CurrentVelocity => Motor.Velocity;
 
         [ShowInInspector] 
@@ -26,7 +25,7 @@ namespace KinematicEssentials
 
         [field: ShowInInspector]
         public Vector3 DesiredRotationForward { get; set; }
-        private Vector3 _targetRotationForward;
+        private Quaternion _targetRotation;
 
         public Quaternion CurrentRotation { get; private set; }
         public Vector3 CurrentRotationForward { get; private set; }
@@ -38,6 +37,9 @@ namespace KinematicEssentials
 
             CurrentRotationForward = motor.transform.forward;
             DesiredVelocity = Vector3.zero;
+
+            VelocityFilters = new Queue<IKinematicVelocityFilter>(PredictedAmountOfFilters);
+            RotationFilters = new Queue<IKinematicRotationFilter>(PredictedAmountOfFilters);
         }
 
 
@@ -55,7 +57,11 @@ namespace KinematicEssentials
 
         public void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime)
         {
-            _targetVelocity = VelocityFilter?.FilterVelocity(DesiredVelocity) ?? DesiredVelocity;
+            _targetVelocity = DesiredVelocity;
+            foreach (IKinematicVelocityFilter filter in VelocityFilters)
+            {
+                _targetVelocity = filter.FilterVelocity(currentVelocity, _targetVelocity);
+            }
 
             if (Motor.GetState().GroundingStatus.IsStableOnGround)
             {
@@ -71,19 +77,26 @@ namespace KinematicEssentials
 
         public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)
         {
-            _targetRotationForward = RotationFilter?.FilterRotation(DesiredRotationForward) ?? DesiredRotationForward;
 
             Transform motorTransform = Motor.transform;
 
             Vector3 transformUp = motorTransform.up;
             // to avoid rotate out of Character's Y
-            Vector3 onPlaneForward = Vector3.ProjectOnPlane(_targetRotationForward,transformUp);
+            Vector3 onPlaneForward = Vector3.ProjectOnPlane(DesiredRotationForward, transformUp);
             //Just to avoid Quaternion(zero)
             Vector3 smallForward = motorTransform.forward * 0.001f;
 
             CurrentRotationForward = onPlaneForward + smallForward;
+            Quaternion targetRotation = Quaternion.LookRotation(CurrentRotationForward, transformUp);
+            
+            _targetRotation = targetRotation;
+            foreach (IKinematicRotationFilter filter in RotationFilters)
+            {
+                _targetRotation = filter.FilterRotation(currentRotation, _targetRotation);
+            }
 
-            CurrentRotation = Quaternion.LookRotation(CurrentRotationForward,transformUp);
+
+            CurrentRotation = _targetRotation;
             currentRotation = CurrentRotation;
         }
 
@@ -135,8 +148,8 @@ namespace KinematicEssentials
         void DoVelocityLerp(Vector3 target, float changeSpeed);
 
         /// <summary>
-        /// This <see cref="Vector3"/> will be <seealso cref="Vector3.ProjectOnPlane"/>
-        /// and <seealso cref="Quaternion.LookRotation"/>
+        /// The proccess for this <see cref="Vector3"/> will be <seealso cref="Vector3.ProjectOnPlane"/>
+        /// and <seealso cref="Quaternion.LookRotation"/> for the rotation be handled
         /// </summary>
         Vector3 CurrentRotationForward { get; }
         Vector3 DesiredRotationForward { get; set; }
@@ -152,14 +165,14 @@ namespace KinematicEssentials
     public interface IKinematicVelocityFilter
     {
         /// <returns><seealso cref="KinematicMotorHandler._targetVelocity"/></returns>
-        Vector3 FilterVelocity(Vector3 desiredVelocity);
+        Vector3 FilterVelocity(Vector3 currentVelocity, Vector3 desiredVelocity);
     }
 
     public interface IKinematicRotationFilter
     {
 
         /// <returns><seealso cref="KinematicMotorHandler._targetRotationForward"/></returns>
-        Vector3 FilterRotation(Vector3 desiredRotation);
+        Quaternion FilterRotation(Quaternion currentRotation, Quaternion desiredRotation);
     }
 
     public interface IKinematicDeltaVariation

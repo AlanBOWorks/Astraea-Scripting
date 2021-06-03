@@ -34,12 +34,10 @@ namespace Player
         public static IPathCalculator MainHelper;
 
         public static PlayerInputData InputData = null;
-        public static KinematicData KinematicData = null;
+        public static IKinematicData KinematicData = null;
 
         public static float CurrentSpeed => KinematicData.CurrentSpeed;
         public static bool IsPlayerMoving => InputData.IsMoving;
-
-        public static Vector3 GetPlayerPointOfVelocity() => KinematicData.PointOfDesiredVelocity;
     }
 
     

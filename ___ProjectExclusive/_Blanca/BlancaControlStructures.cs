@@ -17,6 +17,38 @@ namespace Blanca
         T Copy { get; }
     }
 
+    public static class BlancaPathStructure
+    {
+        public enum Types
+        {
+            Base = BaseIndex,
+            Lead = LeadIndex,
+            ToPlayer = ToPlayerIndex
+        }
+
+        public const int BaseIndex = 0;
+        public const int LeadIndex = BaseIndex + 1;
+        public const int ToPlayerIndex = LeadIndex + 1;
+    }
+
+    public static class BlancaMovementStructure
+    {
+        public enum Types
+        {
+            Base = BaseIndex,
+            Lead = LeadIndex,
+            ToPlayer = ToPlayerIndex,
+            Copy = CopyIndex
+        }
+
+        public const int BaseIndex = BlancaPathStructure.BaseIndex;
+        public const int LeadIndex = BlancaPathStructure.LeadIndex;
+        public const int ToPlayerIndex = BlancaPathStructure.ToPlayerIndex;
+        public const int CopyIndex = ToPlayerIndex + 1;
+
+        public const int MovementTypesAmount = CopyIndex + 1;
+    }
+
     public struct BlancaVelocityWeight
     {
         public float Base;
@@ -38,33 +70,33 @@ namespace Blanca
         [ShowInInspector]
         public T Base
         {
-            get => Elements[BaseIndex];
-            protected set => Elements[BaseIndex] = value;
+            get => Elements[BlancaMovementStructure.BaseIndex];
+            protected set => Elements[BlancaMovementStructure.BaseIndex] = value;
         }
         [ShowInInspector]
         public T Lead
         {
-            get => Elements[LeadIndex];
-            protected set => Elements[LeadIndex] = value;
+            get => Elements[BlancaMovementStructure.LeadIndex];
+            protected set => Elements[BlancaMovementStructure.LeadIndex] = value;
         }
         [ShowInInspector]
         public T ToPlayer
         {
-            get => Elements[ToPlayerIndex];
-            protected set => Elements[ToPlayerIndex] = value;
+            get => Elements[BlancaMovementStructure.ToPlayerIndex];
+            protected set => Elements[BlancaMovementStructure.ToPlayerIndex] = value;
         }
         [ShowInInspector]
         public T Copy
         {
-            get => Elements[CopyIndex];
-            protected set => Elements[CopyIndex] = value;
+            get => Elements[BlancaMovementStructure.CopyIndex];
+            protected set => Elements[BlancaMovementStructure.CopyIndex] = value;
         }
 
         public List<T> Elements { get; protected set; }
 
         public BlancaMovementStructure()
         {
-            Elements = new List<T>(MovementTypesAmount);
+            Elements = new List<T>(BlancaMovementStructure.MovementTypesAmount);
         }
 
         public BlancaMovementStructure(IBlancaMovementStructure<T> wrapper)
@@ -76,16 +108,11 @@ namespace Blanca
             Elements.Add(wrapper.Copy);
         }
 
-        public const int BaseIndex = 0;
-        public const int LeadIndex = BaseIndex + 1;
-        public const int ToPlayerIndex = LeadIndex + 1;
-        public const int CopyIndex = ToPlayerIndex + 1;
-
-        public const int MovementTypesAmount = CopyIndex+1;
+        
 
         public void AddBasicSetup(T basePath, T leadPath, T toPlayerPath)
         {
-            if (Elements.Count >= MovementTypesAmount -1)
+            if (Elements.Count >= BlancaMovementStructure.MovementTypesAmount -1)
             {
                 Base = basePath;
                 Lead = leadPath;
@@ -109,6 +136,20 @@ namespace Blanca
         public T Base => _base;
         public T Lead => _lead;
         public T ToPlayer => _toPlayer;
+
+        public T GetElement(BlancaPathStructure.Types targetTypes)
+        {
+            switch (targetTypes)
+            {
+                default:
+                case BlancaPathStructure.Types.Base:
+                    return _base;
+                case BlancaPathStructure.Types.Lead:
+                    return _lead;
+                case BlancaPathStructure.Types.ToPlayer:
+                    return _toPlayer;
+            }
+        }
     }
 
     public interface IBlancaRotationStructure<out T>
@@ -192,6 +233,22 @@ namespace Blanca
         T Movement { get; }
         T Random { get; }
         T AtPlayer { get; }
+    }
+
+    public struct BlancaLookAtWeights : IBlancaLookAtStructure<float> //Just for the structure (don't use for boxing)
+    {
+        public BlancaLookAtWeights(float target, float movement, float random, float atPlayer)
+        {
+            Target = target;
+            Movement = movement;
+            Random = random;
+            AtPlayer = atPlayer;
+        }
+
+        public float Target { get; set; }
+        public float Movement { get; set; }
+        public float Random { get; set; }
+        public float AtPlayer { get; set; }
     }
 
     public class BlancaLookAtStructure<T> : IBlancaLookAtStructure<T>

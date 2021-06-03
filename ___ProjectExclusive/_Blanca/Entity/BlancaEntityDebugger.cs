@@ -12,7 +12,7 @@ namespace Blanca
     {
 #if UNITY_EDITOR
 
-        [TabGroup("Entity"), NonSerialized, ShowInInspector, HideInEditorMode]
+        [NonSerialized, ShowInInspector, HideInEditorMode]
         public BlancaEntity Entity;
 
         public void Awake()

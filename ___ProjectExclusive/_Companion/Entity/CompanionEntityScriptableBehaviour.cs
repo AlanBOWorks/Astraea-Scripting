@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Blanca;
+using IKEssentials;
 using MEC;
 using Player;
 using SharedLibrary;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Companion
 {
@@ -18,10 +20,8 @@ namespace Companion
         menuName = "Entity/Companion/Scriptable Behaviour")]
     public class CompanionEntityScriptableBehaviour : ScriptableObject
     {
-        [SerializeField] 
-        private CompanionEntitySingleton _singleton = CompanionEntitySingleton.Instance; //Handle for configurations
         [SerializeField]
-        private CompanionEntity _entity = CompanionEntitySingleton.Instance.Entity;
+        private CompanionEntity entity = CompanionEntitySingleton.Instance.Entity;
 
         [ShowInInspector,HideInEditorMode]
         [TabGroup("Blanca")]
@@ -44,14 +44,22 @@ namespace Companion
 
                 //There's no check for player since there's always
                 // player while Blanca is present
-                yield return Timing.WaitUntilTrue(BlancaInjectionWait);
+                yield return Timing.WaitUntilTrue(UntilInjectionWait);
 
                 _blancaTransform = blancaEntity.CharacterTransformData;
                 _playerTransform = playerEntity.CharacterTransformData;
 
+                CompanionUtils.BlancaTransformData = _blancaTransform;
+                CompanionUtils.PlayerTransformData = playerEntity.CharacterTransformData;
+
                 Transform blancaCheck = _blancaTransform.Root;
                 Transform playerCheck = _playerTransform.Root;
 
+                HoldHandHandler holdHandHandler = new HoldHandHandler(
+                    _playerTransform.Pelvis,
+                    _blancaTransform.Pelvis);
+
+                entity.HoldHandHandler = holdHandHandler;
 
                 // Checks if the reference of both Transform exits (if on change of scene or
                 // anything happens it should stop)
@@ -62,7 +70,7 @@ namespace Companion
                 }
 
 
-                bool BlancaInjectionWait()
+                bool UntilInjectionWait()
                 {
                     return blancaEntity.CharacterTransformData != null && blancaEntity.CharacterTransformData.Root != null;
                 }
@@ -73,9 +81,9 @@ namespace Companion
         private void DoEntityAction()
         {
             Vector3 vectorTowardsPlayer = (_playerTransform.MeshWorldPosition - _blancaTransform.MeshWorldPosition);
-            _entity.VectorTowardsPlayer = vectorTowardsPlayer;
-            _entity.NormalizedVectorTowardsPlayer = vectorTowardsPlayer.normalized;
-            _entity.DistanceOfSeparation = vectorTowardsPlayer.magnitude;
+            entity.VectorTowardsPlayer = vectorTowardsPlayer;
+            entity.NormalizedVectorTowardsPlayer = vectorTowardsPlayer.normalized;
+            entity.DistanceOfSeparation = vectorTowardsPlayer.magnitude;
         }
     }
 }

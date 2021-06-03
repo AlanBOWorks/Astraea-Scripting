@@ -24,6 +24,7 @@ namespace SharedLibrary
         [SerializeField] private Transform _root = null;
         [SerializeField] private Transform _meshRoot = null;
         [SerializeField] private Transform _head = null;
+        [SerializeField] private Transform _pelvis = null;
 
         [ShowInInspector,DisableInPlayMode,HideInEditorMode]
         public Vector3 MeshWorldPosition { get; private set; }
@@ -41,6 +42,8 @@ namespace SharedLibrary
         public Transform MeshRoot => _meshRoot;
         public Transform Head => _head;
         public Vector3 HeadPosition { get; private set; }
+        public Transform Pelvis => _pelvis;
+        public Vector3 PelvisPosition { get; private set; }
 
         public virtual void Update()
         {
@@ -50,6 +53,7 @@ namespace SharedLibrary
             MeshRight = _meshRoot.right;
 
             HeadPosition = _head.position;
+            PelvisPosition = _pelvis.position;
         }
     }
 }
