@@ -167,14 +167,14 @@ namespace SMaths
 
 
 
-        private static float Percentage(float value, float minValue, float maxValue)
+        public static float Percentage(float value, float minValue, float maxValue)
         {
             return (value - minValue)
                    /
                    (maxValue - minValue);
         }
 
-        private static float Percentage(float value, SRange sRange)
+        public static float Percentage(float value, SRange sRange)
         {
             return Percentage(value, sRange.minValue, sRange.maxValue);
         }

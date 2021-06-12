@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using KinematicEssentials;
+using MEC;
 using RootMotion.FinalIK;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -18,8 +20,23 @@ namespace IKEssentials
 
         private void Awake()
         {
-            _leftFoot = new FootHandler(biped.solver.leftFootEffector,biped.references.leftFoot);
-            _rightFoot = new FootHandler(biped.solver.rightFootEffector, biped.references.rightFoot);
+            Transform root = biped.references.pelvis.root;
+
+            Transform leftFoot = biped.references.leftFoot;
+            _leftFoot = new FootHandler(
+                biped.solver.leftFootEffector,
+                leftFoot,
+                leftFoot.GetChild(0),
+                root);
+
+            Transform rightFoot = biped.references.rightFoot;
+            _rightFoot = new FootHandler(
+                biped.solver.rightFootEffector,
+                rightFoot,
+                rightFoot.GetChild(0),
+                root);
+
+
             _feet = new FeetHandler(_leftFoot,_rightFoot);
 
             _isMoving = false;
@@ -48,7 +65,7 @@ namespace IKEssentials
         }
 
 
-        public void InLargeAngle(float dotAngle)
+        public void InLargeAngle(float dotAngle,bool isRight)
         {
             if(_isMoving) return;
             _feet.UnPin();
@@ -97,12 +114,18 @@ namespace IKEssentials
 
         internal class FootHandler
         {
-            public FootHandler(IKEffector effector,Transform bone)
+            public FootHandler(IKEffector effector,Transform bone, Transform toe, Transform rootReference)
             {
                 _effector = effector;
                 _bone = bone;
                 _pinner = new PinFoot(bone);
                 _weight = new WeightFoot(effector);
+
+                _filters = new IFeetIKFilter[]
+                {
+                    _pinner,
+                    new ProjectOnFloor(rootReference)
+                };
             }
 
             private readonly IKEffector _effector;
@@ -110,15 +133,25 @@ namespace IKEssentials
             private readonly PinFoot _pinner;
             private readonly WeightFoot _weight;
 
+            private readonly IFeetIKFilter[] _filters;
+
             public void HandleIK()
             {
                 Vector3 currentPosition = _bone.position;
-                //TODO do the queue when there's more filters
-
-                _effector.position = _pinner.CalculatePosition(currentPosition);
+                Vector3 filterPosition = currentPosition;
 
                 Quaternion currentRotation = _bone.rotation;
-                _effector.rotation = _pinner.CalculateRotation(currentRotation);
+                Quaternion filterRotation = currentRotation;
+                
+                foreach (IFeetIKFilter filter in _filters)
+                {
+                    filter.CalculatePosition(ref filterPosition, currentPosition);
+                    filter.CalculateRotation(ref filterRotation,currentRotation);
+                }
+
+                _effector.position = filterPosition;
+                _effector.rotation = filterRotation;
+
             }
 
             public void Pin()
@@ -185,36 +218,61 @@ namespace IKEssentials
                 _pinned = false;
             }
 
-            public Vector3 CalculatePosition(Vector3 currentPosition)
+            public void CalculatePosition(ref Vector3 lastFilter, Vector3 currentPosition)
             {
-                return _pinned
-                    ? _pinnedPosition
-                    : currentPosition;
+                if (_pinned)
+                    lastFilter = _pinnedPosition;
             }
 
-            public Quaternion CalculateRotation(Quaternion currentRotation)
+            public void CalculateRotation(ref Quaternion lastFilter, Quaternion currentRotation)
             {
-                return _pinned
-                    ? _pinnedRotation
-                    : currentRotation;
+                if (_pinned)
+                    lastFilter = _pinnedRotation;
             }
         }
-        private class RepositionOnStop : IFeetIKFilter
+        
+        internal class ProjectOnFloor : IFeetIKFilter
+        {
+            private readonly Transform _rootReference;
+
+            public ProjectOnFloor(Transform rootReference)
+            {
+                _rootReference = rootReference;
+            }
+
+
+            private void ProjectOnPlane(ref Vector3 lastFilter)
+            {
+
+                lastFilter.y = _rootReference.position.y;
+            }
+
+            public void CalculatePosition(ref Vector3 lastFilter, Vector3 currentPosition)
+            {
+                ProjectOnPlane(ref lastFilter);
+            }
+
+
+            public void CalculateRotation(ref Quaternion lastFilter, Quaternion currentRotation)
+            {
+                
+            }
+        }
+
+        internal class SmoothFilter : IFeetIKFilter
         {
 
-
-
-            public Vector3 CalculatePosition(Vector3 currentPosition)
+            private const float StepPerTick = .8f;
+            public void CalculatePosition(ref Vector3 lastFilter, Vector3 currentPosition)
             {
-                throw new System.NotImplementedException();
+                lastFilter = Vector3.Lerp(currentPosition,lastFilter,StepPerTick);
             }
 
-            public Quaternion CalculateRotation(Quaternion currentRotation)
+            public void CalculateRotation(ref Quaternion lastFilter, Quaternion currentRotation)
             {
-                throw new System.NotImplementedException();
+                lastFilter = Quaternion.Slerp(currentRotation,lastFilter, StepPerTick);
             }
         }
-
     }
 
     public interface IFeetIKFilter : IFeetPositionFilter, IFeetRotationFilter
@@ -222,12 +280,12 @@ namespace IKEssentials
 
     public interface IFeetPositionFilter
     {
-        Vector3 CalculatePosition(Vector3 currentPosition);
+        void CalculatePosition(ref Vector3 lastFilter, Vector3 currentPosition);
     }
 
     public interface IFeetRotationFilter
     {
-        Quaternion CalculateRotation(Quaternion currentRotation);
+        void CalculateRotation(ref Quaternion lastFilter, Quaternion currentRotation);
 
     }
 }

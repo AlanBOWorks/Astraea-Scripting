@@ -1,5 +1,6 @@
 ﻿using Animancer;
 using AnimancerEssentials;
+using FIMSpace.FLook;
 using IKEssentials;
 using KinematicCharacterController;
 using KinematicEssentials;
@@ -16,8 +17,14 @@ namespace Player
         [Title("References")]
         [SerializeField] private KinematicCharacterMotor _motor = null;
         [SerializeField] private PlayerBodyRotationHandler rotationHandler = null;
+
+        [Title("IK")]
         [SerializeField] private FullBodyBipedIK _biped = null;
+        [SerializeField] private FLookAnimator _lookAt = null;
+        [SerializeField] private IrisLookAt _irisLookAt = null;
         [SerializeField] private IKFeetHandler _ikFeetHandler = null;
+        [SerializeField] 
+        private FingersSolverConstructor _fingersSolverConstructor = new FingersSolverConstructor();
 
         [Title("Transform")]
         [SerializeField] private PlayerTransformHandler _playerTransformHandler = new PlayerTransformHandler();
@@ -49,10 +56,12 @@ namespace Player
             ComposedKinematicData playerKinematicData = new ComposedKinematicData(rawKinematicData,rotationHandler);
 
             //----  Kinematic Motor; Filters
-            OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity();
+            OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity(4);
             motorHandler.VelocityFilters.Enqueue(onStopFilterVelocity);
 
             //---- IKs
+            FullHumanoidIKSolver humanoidIk =
+                new FullHumanoidIKSolver(_biped, _lookAt, _irisLookAt, _fingersSolverConstructor);
 
             //---- Inputs
             _inputHandler.Injection(playerTransform);
@@ -79,13 +88,17 @@ namespace Player
             entity.MotorHandler = motorHandler;
             entity.InputData = _inputHandler.InputData;
             entity.MovementTrackerEvent = movementTrackerEvent;
+            entity.HumanoidIkSolver = humanoidIk;
 
             //---- <INJECTION: Ticker> ----
             ticker.AddCallbackReceiver(_playerTransformHandler);
             ticker.AddCallbackReceiver(kinematicDataHandler);
             ticker.AddCallbackReceiver(_inputHandler);
             ticker.AddCallbackReceiver(_inputRotation);
-            
+
+
+
+            _fingersSolverConstructor = null; //To avoid generating new solvers on accident
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ___ProjectExclusive;
 using AIEssentials;
 using Animancer;
 using AnimancerEssentials;
@@ -15,7 +16,7 @@ using UnityEngine;
 namespace Blanca
 {
     [Serializable]
-    public class BlancaEntity
+    public class BlancaEntity : ICharacterDataHolder
     {
         [TabGroup("Transform","Transform"), ShowInInspector, HideInEditorMode]
         private ICharacterTransformData _characterTransformData = null;
@@ -110,16 +111,21 @@ namespace Blanca
         public EyesBlinkerHandler BlinkerHandler = null;
 
         [TabGroup("Visual handlers", "IK"), ShowInInspector, HideInEditorMode]
-        private HumanoidIKSolver _humanoidIkSolver = null;
-        public HumanoidIKSolver HumanoidIkSolver
+        private FullHumanoidIKSolver _humanoidIkSolver = null;
+        public FullHumanoidIKSolver HumanoidIkSolver
         {
             get => _humanoidIkSolver;
             set
             {
                 _humanoidIkSolver = value;
-                BlancaUtilsIK.HumanoidIkSolver = value;
+                LeftArmTargetHandler = value.LeftTargetHandler;
+                RightArmTargetHandler = value.RightTargetHandler;
             }
         }
+        public FullArmTargetHandler LeftArmTargetHandler { get; private set; }
+        public FullArmTargetHandler RightArmTargetHandler { get; private set; }
+        public IIKSolver MainHandSolver => HumanoidIkSolver.MainHand;
+
 
         [TabGroup("Visual handlers", "IK"), ShowInInspector, HideInEditorMode]
         private BlancaLookAtControlHolder _lookAtControls = null;
@@ -149,6 +155,13 @@ namespace Blanca
 
         [Title("Ticker"), ShowInInspector, HideInEditorMode]
         public TickerHandler TickerHandler = null;
+
+
+        #region :::: ICharacterDataHolder ::::
+        public IKinematicData GetKinematicData() => _kinematicData;
+        public ICharacterTransformData GetTransformData() => _characterTransformData;
+        public FullHumanoidIKSolver GetHumanoidSolver() => _humanoidIkSolver; 
+        #endregion
     }
 
 
@@ -159,16 +172,28 @@ namespace Blanca
     public sealed class BlancaEntitySingleton
     {
         static BlancaEntitySingleton() { }
-        private BlancaEntitySingleton() { }
+
+        private BlancaEntitySingleton()
+        {
+            Entity = new BlancaEntity();
+            Props = new BlancaPropsEntity();
+        }
         public static BlancaEntitySingleton Instance { get; } = new BlancaEntitySingleton();
 
         //Data container
-        public BlancaParametersVariable Parameters;
-        public TransformDataVariable TransformData;
+        public BlancaParametersVariable Parameters = null;
+        public TransformDataVariable TransformData = null;
 
-        [SerializeField, HideInEditorMode, HideInPlayMode, HideInInlineEditors,HideDuplicateReferenceBox]
-        public BlancaEntity Entity = new BlancaEntity();
+        public BlancaEntity Entity = null;
+        public BlancaPropsEntity Props = null;
 
         public static BlancaEntity GetEntity() => Instance.Entity;
+    }
+
+    [Serializable]
+    public class BlancaPropsEntity
+    {
+        public UHandTargetBase TorchLeftTarget = null;
+        public UHandTargetBase TorchRightTarget = null;
     }
 }

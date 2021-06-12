@@ -6,29 +6,21 @@ namespace IKEssentials
 {
     public interface IIKSolver
     {
+        // It doesn't use the (Transform target) variation for smooth transitions withing points.
+        // Yes, this is just a reminder so I'm not feeling tempted of adding this
+        //void SetTarget(Transform target);
         void SetTarget(Vector3 targetPoint);
+        void SetRotation(Quaternion targetRotation);
         void SetWeight(float weight);
+        void SetRotationWeight(float weight);
 
         float GetCurrentWeight();
-        /// <summary>
-        /// For subtraction or addition
-        /// </summary>
-        void ModifyWeight(float variation);
+        float GetRotationWeight();
+
+        Vector3 SolverPosition { get; }
+        Quaternion SolverRotation { get; }
     }
 
-    public interface IHeadIKSolver : IIKSolver
-    {
-        float GetAverageWeight();
-        void SetHeadTarget(Vector3 targetPoint);
-        void SetHeadWeight(float weight);
-        float GetHeadWeight();
-        Vector3 GetHeadLookPoint();
-
-        void SetIrisTarget(Vector3 targetPoint);
-        void SetIrisWeight(float weight);
-        float GetIrisWeight();
-        Vector3 GetIrisLookPoint();
-    }
 
     public interface IMainHandSetter
     {

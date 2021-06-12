@@ -27,8 +27,7 @@ namespace Blanca
             {
                 PlayerEntity playerEntity = PlayerEntitySingleton.Instance.Entity;
                 yield return Timing.WaitUntilTrue(PlayerInstantiated);
-                IKinematicVelocity copyVelocity = playerEntity.KinematicData;
-                Elements.Add(new CopyVelocityControl(copyVelocity));
+                Elements.Add(new CopyVelocityControl(playerEntity.InputData));
 
                 bool PlayerInstantiated()
                 {

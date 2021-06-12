@@ -24,11 +24,11 @@ namespace AnimancerEssentials
         {
             IdleState = target.Idle;
             MovementState = target.Movement;
-            ChangeWeight(movementWeight,fadeDuration);
+            ChangeMoveWeight(movementWeight,fadeDuration);
         }
        
         private const float MinWeight = 0.01f;//0 will reset the animation
-        public void ChangeWeight(float movementWeight, float fadeDuration = .25f)
+        public void ChangeMoveWeight(float movementWeight, float fadeDuration = .25f)
         {
             CurrentState = movementWeight > .5f ? MovementState : IdleState;
             if (movementWeight < MinWeight) movementWeight = MinWeight;

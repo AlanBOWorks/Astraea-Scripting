@@ -14,19 +14,18 @@ namespace KinematicEssentials
         /// The order of the Queue is the order of priority of execution
         /// </summary>
         public readonly Queue<IKinematicVelocityFilter> VelocityFilters;
+        private readonly MotorFilteredVelocity _filteredVelocity;
         public readonly Queue<IKinematicRotationFilter> RotationFilters;
+        private readonly MotorFilteredRotation _filteredRotation;
 
         private const int PredictedAmountOfFilters = 4;
         public Vector3 CurrentVelocity => Motor.Velocity;
 
         [ShowInInspector] 
         public Vector3 DesiredVelocity { get; set; }
-        private Vector3 _targetVelocity;
 
         [field: ShowInInspector]
         public Vector3 DesiredRotationForward { get; set; }
-        private Quaternion _targetRotation;
-
         public Quaternion CurrentRotation { get; private set; }
         public Vector3 CurrentRotationForward { get; private set; }
 
@@ -40,6 +39,9 @@ namespace KinematicEssentials
 
             VelocityFilters = new Queue<IKinematicVelocityFilter>(PredictedAmountOfFilters);
             RotationFilters = new Queue<IKinematicRotationFilter>(PredictedAmountOfFilters);
+
+            _filteredVelocity = new MotorFilteredVelocity();
+            _filteredRotation = new MotorFilteredRotation();
         }
 
 
@@ -57,21 +59,25 @@ namespace KinematicEssentials
 
         public void UpdateVelocity(ref Vector3 currentVelocity, float deltaTime)
         {
-            _targetVelocity = DesiredVelocity;
+            _filteredVelocity.LastFilteredVelocity = DesiredVelocity;
+            _filteredVelocity.CurrentVelocity = currentVelocity;
+            _filteredVelocity.DesiredVelocity = DesiredVelocity;
             foreach (IKinematicVelocityFilter filter in VelocityFilters)
             {
-                _targetVelocity = filter.FilterVelocity(currentVelocity, _targetVelocity);
+                _filteredVelocity.LastFilteredVelocity = filter.FilterVelocity(_filteredVelocity);
             }
+            var targetVelocity = _filteredVelocity.LastFilteredVelocity;
+
 
             if (Motor.GetState().GroundingStatus.IsStableOnGround)
             {
-                currentVelocity = _targetVelocity;
+                currentVelocity = targetVelocity;
             }
             else
             {
                 _currentGravity += CharacterGravity.Gravity * deltaTime;
                 currentVelocity = _currentGravity;
-                if (CharacterGravity.CanMoveOnAir) currentVelocity += _targetVelocity;
+                if (CharacterGravity.CanMoveOnAir) currentVelocity += targetVelocity;
             }
         }
 
@@ -88,15 +94,16 @@ namespace KinematicEssentials
 
             CurrentRotationForward = onPlaneForward + smallForward;
             Quaternion targetRotation = Quaternion.LookRotation(CurrentRotationForward, transformUp);
-            
-            _targetRotation = targetRotation;
+
+            _filteredRotation.CurrentRotation = currentRotation;
+            _filteredRotation.DesiredRotation = targetRotation;
+            _filteredRotation.LastFilteredRotation = currentRotation;
             foreach (IKinematicRotationFilter filter in RotationFilters)
             {
-                _targetRotation = filter.FilterRotation(currentRotation, _targetRotation);
+                _filteredRotation.LastFilteredRotation = filter.FilterRotation(_filteredRotation);
             }
 
-
-            CurrentRotation = _targetRotation;
+            CurrentRotation = _filteredRotation.LastFilteredRotation;
             currentRotation = CurrentRotation;
         }
 
@@ -141,6 +148,21 @@ namespace KinematicEssentials
         } 
     }
 
+    public class MotorFilteredVelocity
+    {
+        public Vector3 CurrentVelocity;
+        public Vector3 DesiredVelocity;
+        public Vector3 LastFilteredVelocity;
+    }
+
+    public class MotorFilteredRotation
+    {
+        public Quaternion CurrentRotation;
+        public Quaternion DesiredRotation;
+        public Quaternion LastFilteredRotation;
+    }
+
+
     public interface IKinematicMotorHandler
     {
         Vector3 DesiredVelocity { get; set; }
@@ -165,14 +187,14 @@ namespace KinematicEssentials
     public interface IKinematicVelocityFilter
     {
         /// <returns><seealso cref="KinematicMotorHandler._targetVelocity"/></returns>
-        Vector3 FilterVelocity(Vector3 currentVelocity, Vector3 desiredVelocity);
+        Vector3 FilterVelocity(MotorFilteredVelocity velocity);
     }
 
     public interface IKinematicRotationFilter
     {
 
         /// <returns><seealso cref="KinematicMotorHandler._targetRotationForward"/></returns>
-        Quaternion FilterRotation(Quaternion currentRotation, Quaternion desiredRotation);
+        Quaternion FilterRotation(MotorFilteredRotation rotation);
     }
 
     public interface IKinematicDeltaVariation

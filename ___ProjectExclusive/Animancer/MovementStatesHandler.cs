@@ -32,12 +32,12 @@ namespace AnimancerEssentials
 
         public void SwitchToMoveState(float currentSpeed)
         {
-            _baseStatesHandler.ChangeWeight(1);
+            _baseStatesHandler.ChangeMoveWeight(.99f);
         }
 
         public void SwitchToStopState(float currentSpeed)
         {
-            _baseStatesHandler.ChangeWeight(0);
+            _baseStatesHandler.ChangeMoveWeight(0);
         }
 
         public void OnLongMovement(float currentSpeed)

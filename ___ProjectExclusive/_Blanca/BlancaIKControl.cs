@@ -7,11 +7,11 @@ namespace Blanca
     public class BlancaIKControl : ITicker
     {
         private readonly ICharacterTransformData _characterTransform;
-        private readonly IHeadIKSolver _headIkSolver;
+        private readonly HeadLookAtSolverBase _headIkSolver;
         private readonly BlancaLookAtControlHolder _lookAtControls;
 
         public BlancaIKControl(ICharacterTransformData characterTransform,
-            IHeadIKSolver headIkSolver,
+            HeadLookAtSolverBase headIkSolver,
             BlancaLookAtControlHolder lookAtControls)
         {
             _characterTransform = characterTransform;

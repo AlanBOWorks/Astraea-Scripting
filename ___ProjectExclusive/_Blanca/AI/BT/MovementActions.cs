@@ -151,15 +151,32 @@ namespace Blanca
             base.GoToFormation();
         }
 
+        protected override void OnStop()
+        {
+            var velocityControl = BlancaUtilsKinematic.VelocityControls;
+            velocityControl.ToPlayer.VelocityWeight = 0;
+            velocityControl.Copy.VelocityWeight = 0;
+
+            //TODO provisional; make a rotation parameter with curve by distance
+            var rotationControl = BlancaUtilsKinematic.RotationControls;
+            rotationControl.Movement.RotationWeight = 0f;
+            rotationControl.Copy.RotationWeight = 0f;
+
+            var lookAtControl = BlancaUtilsIK.LookAtControls;
+            lookAtControl.AtPlayer.LookAtWeight = 0f;
+            lookAtControl.Movement.LookAtWeight = 0f;
+        }
+
         private static void EnableWeights()
         {
             var velocityControl = BlancaUtilsKinematic.VelocityControls;
             velocityControl.ToPlayer.VelocityWeight = 1;
+            velocityControl.Copy.VelocityWeight = 1;
 
             //TODO provisional; make a rotation parameter with curve by distance
             var rotationControl = BlancaUtilsKinematic.RotationControls;
             rotationControl.Movement.RotationWeight = .3f;
-            rotationControl.Copy.RotationWeight = .7f;
+            rotationControl.Copy.RotationWeight = 1f;
 
             var lookAtControl = BlancaUtilsIK.LookAtControls;
             lookAtControl.AtPlayer.LookAtWeight = .3f;

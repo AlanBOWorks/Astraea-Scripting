@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ___ProjectExclusive;
 using Blanca;
 using IKEssentials;
 using MEC;
@@ -54,12 +55,6 @@ namespace Companion
 
                 Transform blancaCheck = _blancaTransform.Root;
                 Transform playerCheck = _playerTransform.Root;
-
-                HoldHandHandler holdHandHandler = new HoldHandHandler(
-                    _playerTransform.Pelvis,
-                    _blancaTransform.Pelvis);
-
-                entity.HoldHandHandler = holdHandHandler;
 
                 // Checks if the reference of both Transform exits (if on change of scene or
                 // anything happens it should stop)

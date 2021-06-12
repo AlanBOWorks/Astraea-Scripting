@@ -20,6 +20,7 @@ namespace AnimancerEssentials
         [Title("Animation Settings")]
         [TabGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _idleClip = null;
         [TabGroup("Body"), SerializeField, HideInPlayMode] private MixerTransition2D _defaultMovement = null;
+        [TabGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _breathing = null;
 
         [TabGroup("Facial"), SerializeField, HideInPlayMode] private AnimationClip _idleExpression = null;
         [TabGroup("Facial"), SerializeField, HideInPlayMode] private AnimationClip _blinkExpression = null;
@@ -56,6 +57,8 @@ namespace AnimancerEssentials
             AnimancerBaseStatesHandler animancerBaseStates 
                 = new AnimancerBaseStatesHandler(animancerMovementStates);
             MovementStatesHandler movementStatesHandler = new MovementStatesHandler(animancerBaseStates);
+
+            humanoidLayers.Addition.Play(_breathing);
 
             facialLayers.Base.GetOrCreateState(_idleExpression).Weight = 1; //TODO make an expression handler
             facialLayers.Override.GetOrCreateState(_blinkExpression).Weight = 1;

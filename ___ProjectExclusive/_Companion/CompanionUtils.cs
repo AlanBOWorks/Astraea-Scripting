@@ -1,5 +1,6 @@
 ﻿using AIEssentials;
 using Blanca;
+using IKEssentials;
 using KinematicEssentials;
 using PlayerEssentials;
 using SharedLibrary;
@@ -9,7 +10,7 @@ namespace Companion
 {
     public static class CompanionUtils
     {
-        private static CompanionEntity Entity => CompanionEntitySingleton.Instance.Entity;
+        private static readonly CompanionEntity Entity = CompanionEntitySingleton.Instance.Entity;
 
         public static ICharacterTransformData BlancaTransformData = null;
         public static IPlayerTransformData PlayerTransformData = null;
@@ -27,6 +28,17 @@ namespace Companion
             IPathCalculator leadPathCalculator = BlancaUtilsKinematic.PathControls.Lead;
             Vector3 leadPoint = BlancaTransformData.MeshWorldPosition + leadPathCalculator.DesiredVelocity();
             return (playerDesiredPoint - leadPoint).sqrMagnitude < distanceThreshold * distanceThreshold;
+        }
+
+        public static void UpdateHandIkPositionToHoldHand(bool enabled)
+        {
+            HoldHandHandler handler = Entity.HoldHandHandler;
+            handler.ToggleHandling(enabled);
+        }
+        public static void UpdateHandIkPositionToHoldHand(bool enabled, Vector3 startPosition)
+        {
+            HoldHandHandler handler = Entity.HoldHandHandler;
+            handler.ToggleHandling(enabled, startPosition);
         }
     }
 }

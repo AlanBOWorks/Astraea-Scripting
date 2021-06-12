@@ -17,7 +17,7 @@ namespace IKEssentials
         public Vector3 ForwardOffset;
         private Vector3 _randomOffset;
 
-        [HideInEditorMode] 
+        public Transform Target { set; private get; }
         public Vector3 Destination { get; private set; }
 
         [SuffixLabel("Seconds")]
@@ -64,41 +64,39 @@ namespace IKEssentials
         // In Update because Coroutines doesn't works as I expect and don't know why this happens
         private float _timer = 0;
 
+        public Vector3 ClampedLocalDirection { get; private set; }
         private void Update()
         {
             if (_timer > DestinationUpdateRate)
             {
-                _timer = 0; 
+                _timer = 0;
+
+                if (Target) Destination = Target.position;
+                Vector3 lookForward = Destination - _bodyHead.position;
                 
-                RotateIris(); void RotateIris()
+                //To local
+                lookForward = _bodyHead.InverseTransformDirection(lookForward);
+                lookForward += ForwardOffset + _randomOffset;
+
+                //Clamp
+                lookForward.y = Mathf.Clamp(lookForward.y, -VerticalMax, VerticalMax);
+                lookForward.x = Mathf.Clamp(lookForward.x, -HorizontalMax, HorizontalMax);
+                lookForward.z = Mathf.Max(MinForward, lookForward.z);
+
+                ClampedLocalDirection = lookForward;
+
+                //To world
+                lookForward = _bodyHead.TransformDirection(lookForward);
+
+                Quaternion targetRotation = ProjectedDirectionOnHead();
+                targetRotation = Quaternion.LerpUnclamped(_bodyHead.rotation, targetRotation, Weight);
+
+                _leftIrisRotation.rotation = targetRotation;
+                _rightIrisRotation.rotation = targetRotation;
+
+                Quaternion ProjectedDirectionOnHead()
                 {
-                    Vector3 lookForward = DestinationDirection();
-                    Vector3 DestinationDirection()
-                    {
-                        return Destination - _bodyHead.position;
-                    }
-                    //To local
-                    lookForward = _bodyHead.InverseTransformDirection(lookForward);
-                    lookForward += ForwardOffset + _randomOffset;
-
-                    //Clamp
-                    lookForward.y = Mathf.Clamp(lookForward.y, -VerticalMax, VerticalMax);
-                    lookForward.x = Mathf.Clamp(lookForward.x, -HorizontalMax, HorizontalMax);
-                    lookForward.z = Mathf.Max(MinForward,lookForward.z);
-
-                    //To world
-                    lookForward = _bodyHead.TransformDirection(lookForward);
-
-                    Quaternion targetRotation = ProjectedDirectionOnHead();
-                    targetRotation = Quaternion.LerpUnclamped(_bodyHead.rotation, targetRotation, Weight);
-
-                    _leftIrisRotation.rotation = targetRotation;
-                    _rightIrisRotation.rotation = targetRotation;
-
-                    Quaternion ProjectedDirectionOnHead()
-                    {
-                        return Quaternion.LookRotation(lookForward, _bodyHead.up);
-                    }
+                    return Quaternion.LookRotation(lookForward, _bodyHead.up);
                 }
             }
             else

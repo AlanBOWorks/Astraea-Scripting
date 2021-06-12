@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using KinematicEssentials;
 using MEC;
 using SharedLibrary;
@@ -15,7 +16,16 @@ namespace PlayerEssentials
         private IInputMovement _inputMovement = null;
         public Quaternion CurrentRotation => transform.rotation;
         public Vector3 NormalizedCurrentRotationForward { get; private set; }
+        public Vector3 NormalizedCurrentRotationRight { get; private set; }
+
         public Vector3 NormalizedDesiredRotationForward => _playerTransform.CameraPlanarForward;
+
+        /* For Debug
+        private void Start()
+        {
+            _listeners.Add(new DebugRotationEvent());
+        }
+        */
 
 
         [Title("Params")]
@@ -43,6 +53,7 @@ namespace PlayerEssentials
         {
             _listeners = new List<IRotationTriggerListener>(4);//The predicted amount of listeners
             NormalizedCurrentRotationForward = transform.forward;
+            NormalizedCurrentRotationRight = transform.right;
             _canRotate = true;
             //Because this component could be disabled but the forward still needs to be updated
             Timing.RunCoroutine(_TrackForward());
@@ -76,9 +87,10 @@ namespace PlayerEssentials
             if (!_canRotate)
             {
                 if (angleDot > AngleDotThreshold) return;
+                bool isRight = Vector3.Dot(NormalizedDesiredRotationForward, NormalizedCurrentRotationRight) > 0;
 
                 _canRotate = true;
-                InvokeLongAngleEvent(angleDot);
+                InvokeLongAngleEvent(angleDot, isRight);
             }
             else
             {
@@ -88,11 +100,11 @@ namespace PlayerEssentials
             }
         }
 
-        private void InvokeLongAngleEvent(float dotAngle)
+        private void InvokeLongAngleEvent(float dotAngle, bool isRight)
         {
             foreach (IRotationTriggerListener listener in _listeners)
             {
-                listener.InLargeAngle(dotAngle);
+                listener.InLargeAngle(dotAngle, isRight);
             }
         }
 

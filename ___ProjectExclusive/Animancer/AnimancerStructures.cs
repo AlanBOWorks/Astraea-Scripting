@@ -8,15 +8,15 @@ namespace AnimancerEssentials
     {
         public const int BaseIndex = 0;
         public const int UpperHalfIndex = BaseIndex +1;
-        public const int PriorityUpperHalfIndex = UpperHalfIndex +1;
-        public const int OverrideIndex = PriorityUpperHalfIndex +1;
+        public const int OverrideIndex = UpperHalfIndex +1;
+        public const int AdditionIndex = OverrideIndex + 1;
 
-        public const int SerializationLength = OverrideIndex + 1;
+        public const int SerializationLength = AdditionIndex+ 1;
 
         public T Base => SerializedData[BaseIndex];
         public T UpperHalf => SerializedData[UpperHalfIndex];
-        public T PriorityUpperHalf => SerializedData[PriorityUpperHalfIndex];
         public T Override => SerializedData[OverrideIndex];
+        public T Addition => SerializedData[AdditionIndex];
         public T[] SerializedData { get; protected set; }
 
         public bool IsValid(T[] check)
@@ -48,15 +48,15 @@ namespace AnimancerEssentials
     {
         [SerializeField] private T _base;
         [SerializeField] private T _upperHalf;
-        [SerializeField] private T _priorityUpperHalf;
         [SerializeField] private T _override;
+        [SerializeField] private T _addition;
 
 
         public void OnBeforeSerialize()
         {
             _base = Base;
             _upperHalf = UpperHalf;
-            _priorityUpperHalf = PriorityUpperHalf;
+            _addition = Addition;
             _override = Override;
         }
 
@@ -66,8 +66,8 @@ namespace AnimancerEssentials
             {
                 _base,
                 _upperHalf,
-                _priorityUpperHalf,
-                _override
+                _override,
+                _addition,
             };
         }
     }
@@ -76,11 +76,13 @@ namespace AnimancerEssentials
     {
         public const int BaseIndex = 0;
         public const int AdditionIndex = BaseIndex + 1;
-        public const int OverrideIndex = AdditionIndex + 1;
+        public const int BlinkIndex = AdditionIndex + 1;
+        public const int OverrideIndex = BlinkIndex + 1;
         public const int SerializationLength = OverrideIndex + 1;
 
         public T Base => SerializedData[BaseIndex];
         public T Addition => SerializedData[AdditionIndex];
+        public T Blink => SerializedData[BlinkIndex];
         public T Override => SerializedData[OverrideIndex];
         public T[] SerializedData { get; protected set; }
 
@@ -110,11 +112,13 @@ namespace AnimancerEssentials
     {
         [SerializeField] private T _base;
         [SerializeField] private T _addition;
+        [SerializeField] private T _blink;
         [SerializeField] private T _override;
         public void OnBeforeSerialize()
         {
             _base = Base;
             _addition = Addition;
+            _blink = Blink;
             _override = Override;
         }
 
@@ -124,6 +128,7 @@ namespace AnimancerEssentials
             {
                 _base,
                 _addition,
+                _blink,
                 _override
             };
         }

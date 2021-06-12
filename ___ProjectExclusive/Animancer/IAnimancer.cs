@@ -14,7 +14,7 @@ namespace AnimancerEssentials
     public interface IAnimancerHumanoidStructure<out T> : IAnimancerBaseStructure<T>
     {
         T UpperHalf { get; }
-        T PriorityUpperHalf { get; }
+        T Addition { get; }
 
     }
 

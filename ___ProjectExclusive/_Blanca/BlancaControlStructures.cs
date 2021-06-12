@@ -23,7 +23,7 @@ namespace Blanca
         {
             Base = BaseIndex,
             Lead = LeadIndex,
-            ToPlayer = ToPlayerIndex
+            ToPlayer = ToPlayerIndex,
         }
 
         public const int BaseIndex = 0;
@@ -33,13 +33,7 @@ namespace Blanca
 
     public static class BlancaMovementStructure
     {
-        public enum Types
-        {
-            Base = BaseIndex,
-            Lead = LeadIndex,
-            ToPlayer = ToPlayerIndex,
-            Copy = CopyIndex
-        }
+        
 
         public const int BaseIndex = BlancaPathStructure.BaseIndex;
         public const int LeadIndex = BlancaPathStructure.LeadIndex;
@@ -85,6 +79,8 @@ namespace Blanca
             get => Elements[BlancaMovementStructure.ToPlayerIndex];
             protected set => Elements[BlancaMovementStructure.ToPlayerIndex] = value;
         }
+
+
         [ShowInInspector]
         public T Copy
         {
@@ -123,7 +119,6 @@ namespace Blanca
             Elements.Add(basePath);
             Elements.Add(leadPath);
             Elements.Add(toPlayerPath);
-
         }
     }
 

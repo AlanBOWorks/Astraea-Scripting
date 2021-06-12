@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace SharedLibrary
 {
@@ -9,14 +10,27 @@ namespace SharedLibrary
     {
         [SerializeField] private MonoInjector[] _sequenceOfInjections = new MonoInjector[0];
 
+        public bool destroyGObjectAfter = false;
+        public bool destroyElementsAfter = false;
+
         private void Awake()
         {
             foreach (MonoInjector injector in _sequenceOfInjections)
             {
                 injector.DoInjection();
+                if(destroyElementsAfter) Destroy(injector);
             }
 
-            Destroy(this);
+        }
+
+        private void Start()
+        {
+            if(destroyGObjectAfter)
+                Destroy(gameObject);
+            else
+            {
+                Destroy(this);
+            }
         }
     }
 

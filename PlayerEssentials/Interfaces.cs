@@ -1,4 +1,5 @@
-﻿using SharedLibrary;
+﻿using ___ProjectExclusive;
+using SharedLibrary;
 using UnityEngine;
 
 namespace PlayerEssentials
@@ -18,6 +19,7 @@ namespace PlayerEssentials
     public interface IInputMovement
     {
         Vector3 GlobalDesiredDirection { get; }
+        Vector3 GlobalDesiredVelocity { get; }
         bool IsMoving { get; }
         bool IsSprintPress { get; }
         Vector2 PlaneMovement { get; }
@@ -43,5 +45,7 @@ namespace PlayerEssentials
         /// losing its Y local-axis value 
         /// </summary>
         Vector3 CameraProjectedForward { get; }
+
+        Transform GetLookAtPoint();
     }
 }

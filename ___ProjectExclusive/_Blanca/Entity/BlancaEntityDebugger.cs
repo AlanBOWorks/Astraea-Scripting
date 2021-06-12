@@ -15,9 +15,14 @@ namespace Blanca
         [NonSerialized, ShowInInspector, HideInEditorMode]
         public BlancaEntity Entity;
 
+        [NonSerialized, ShowInInspector, HideInEditorMode]
+        public BlancaPropsEntity PropsEntity;
+
         public void Awake()
         {
-            Entity = BlancaEntitySingleton.Instance.Entity;
+            BlancaEntitySingleton singleton = BlancaEntitySingleton.Instance;
+            Entity = singleton.Entity;
+            PropsEntity = singleton.Props;
         }
 
 #else

@@ -4,6 +4,7 @@ using Blanca;
 using KinematicEssentials;
 using MEC;
 using Player;
+using PlayerEssentials;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -23,7 +24,7 @@ namespace ___ProjectExclusive
     public class CopyVelocityControl : IVelocityControl
     {
         [ShowInInspector, DisableInPlayMode]
-        public IKinematicVelocity CopyVelocity { set; private get; }
+        public IInputMovement CopyVelocity { set; private get; }
         private Vector3 _currentCopyVelocity;
 
         [ShowInInspector, PropertyRange(-10, 10)]
@@ -33,17 +34,18 @@ namespace ___ProjectExclusive
         {
             _currentCopyVelocity = Vector3.Lerp(
                 _currentCopyVelocity, 
-                CopyVelocity.CurrentVelocity * VelocityWeight,
+                CopyVelocity.GlobalDesiredVelocity * VelocityWeight,
                 Time.deltaTime * Acceleration);
             return _currentCopyVelocity;
         } 
 
-        public CopyVelocityControl(IKinematicVelocity copyVelocity)
+        public CopyVelocityControl(IInputMovement copyVelocity, float copyAcceleration = 2)
         {
             CopyVelocity = copyVelocity;
+            Acceleration = copyAcceleration;
         }
 
-        public float Acceleration { get; set; } = 4;
+        public float Acceleration { get; set; }
     }
 
     public class PathVelocityControl : IVelocityControl, IPathDestination

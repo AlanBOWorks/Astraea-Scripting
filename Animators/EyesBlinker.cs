@@ -54,6 +54,8 @@ namespace Animators
             Timing.KillCoroutines(BlinkingHandle);
             BlinkingHandle = Timing.RunCoroutine(_StartBlink());
         }
+
+        public float BlinkWeight { get; private set; }
         private IEnumerator<float> _StartBlink()
         {
             _enabled = true;
@@ -99,16 +101,16 @@ namespace Animators
                 _leftIris.SetBlendShapeWeight(IrisFocusBlendIndex, 100); //Force the iris to shape in the "focus" state
                 _rightIris.SetBlendShapeWeight(IrisFocusBlendIndex, 100);
 
-                float irisWeight = _leftIris.GetBlendShapeWeight(IrisFocusBlendIndex);
+                BlinkWeight = _leftIris.GetBlendShapeWeight(IrisFocusBlendIndex);
                 float openSpeed = OpenSpeed.RandomInRange();
 
-                while (irisWeight > 0 + ComparisionThreshold)
+                while (BlinkWeight > 0 + ComparisionThreshold)
                 {
                     UpdateWithCurveExpression(0,openSpeed);
 
-                    irisWeight = _irisFocusCurve.Evaluate(eyesWeight) * 100;
-                    _leftIris.SetBlendShapeWeight(IrisFocusBlendIndex, irisWeight);
-                    _rightIris.SetBlendShapeWeight(IrisFocusBlendIndex,irisWeight);
+                    BlinkWeight = _irisFocusCurve.Evaluate(eyesWeight) * 100;
+                    _leftIris.SetBlendShapeWeight(IrisFocusBlendIndex, BlinkWeight);
+                    _rightIris.SetBlendShapeWeight(IrisFocusBlendIndex,BlinkWeight);
 
                     yield return Timing.WaitForSeconds(Time.deltaTime);
                 }

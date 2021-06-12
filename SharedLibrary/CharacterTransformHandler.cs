@@ -1,4 +1,5 @@
 ﻿using System;
+using ___ProjectExclusive;
 using SharedLibrary;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace SharedLibrary
            _characterTransform.Update();
         }
     }
+
     [Serializable]
     public class CharacterTransform : ICharacterTransformData
     {
@@ -56,4 +58,6 @@ namespace SharedLibrary
             PelvisPosition = _pelvis.position;
         }
     }
+
+
 }

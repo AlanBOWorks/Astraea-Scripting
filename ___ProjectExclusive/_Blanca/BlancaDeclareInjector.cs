@@ -1,4 +1,5 @@
-﻿using AIEssentials;
+﻿using ___ProjectExclusive;
+using AIEssentials;
 using FIMSpace.FLook;
 using IKEssentials;
 using KinematicCharacterController;
@@ -17,25 +18,33 @@ namespace Blanca
         [Title("References")]
         [SerializeField] private KinematicCharacterMotor _motor = null;
 
-        [Title("Transforms")] 
-        [SerializeField]
-        private CharacterTransformHandler _characterTransformHandler = new CharacterTransformHandler();
+        [Title("Transforms")]
+        [SerializeField] private BlancaTransformHandler blancaTransform = new BlancaTransformHandler();
 
         [Title("IK Handlers")] 
         [SerializeField] private FullBodyBipedIK _bipedIk = null;
         [SerializeField] private FLookAnimator _lookAtAnimator = null;
         [SerializeField] private IrisLookAt _irisLookAt = null;
         [SerializeField] private IKFeetHandler _ikFeetHandler = null;
+        [Title("IK - Fingers")] 
+        [SerializeField]
+        private FingersSolverConstructor _fingersSolverConstructor = new FingersSolverConstructor();
 
         [Title("Transforms")]
         [SerializeField] 
         private BlancaPersonality personality = new BlancaPersonality();
 
-        [Title("Parameters")] 
+        [Title("Parameters - Kinematic")] 
         [SerializeField]
         private CurveRotationFilter curveRotationFilter = new CurveRotationFilter();
+        [SerializeField] 
+        private CurveVelocityFilter curveVelocityFilter = new CurveVelocityFilter();
         [SerializeField, Range(-1,1)] 
         private float rotationTriggerDotThreshold = .4f;
+        [Title("Parameters - IK")]
+        [SerializeField, SuffixLabel("%/m^2")]
+        private AnimationCurve sqrLookAtTargetModifier = new AnimationCurve(
+            new Keyframe(.1f,4f),new Keyframe(1,0));
 
         public override void DoInjection()
         {
@@ -47,7 +56,7 @@ namespace Blanca
             TickerHandler ticker = entity.TickerHandler;
 
             //---- Transforms
-            ICharacterTransformData characterTransformData = _characterTransformHandler.CharacterTransform;
+            ICharacterTransformData characterTransformData = blancaTransform.CharacterTransform;
             entity.CharacterTransformData = characterTransformData;
 
 
@@ -67,12 +76,13 @@ namespace Blanca
 
             //----  Kinematic Motor; Filters
             OnStopFilterVelocity onStopFilterVelocity = new OnStopFilterVelocity();
-            OnStopFilterRotation onStopFilterRotation = new OnStopFilterRotation(kinematicData, 30f);
 
             motorHandler.VelocityFilters.Enqueue(onStopFilterVelocity);
+            motorHandler.VelocityFilters.Enqueue(curveVelocityFilter);
+            motorHandler.VelocityFilters.Enqueue(new SmoothVelocityFilter(8));
 
-            motorHandler.RotationFilters.Enqueue(onStopFilterRotation);
             motorHandler.RotationFilters.Enqueue(curveRotationFilter);
+            motorHandler.RotationFilters.Enqueue(new SmoothRotationFilter());
 
             //---- Kinematic Motor; Final
             BlancaMotorControl motorControl 
@@ -82,8 +92,10 @@ namespace Blanca
             
             
             //---- IK: Handlers
-            HumanoidIKSolver humanoidIkSolver = new HumanoidIKSolver(_bipedIk,_lookAtAnimator,_irisLookAt);
-            humanoidIkSolver.SetUpMainHand(parameters.IsLeftMainHand);
+            FullHumanoidIKSolver humanoidIkSolver 
+                = new FullHumanoidIKSolver(_bipedIk,
+                    _lookAtAnimator, _irisLookAt,
+                    _fingersSolverConstructor, true);
 
             //---- IK: Controls
             BlancaLookAtControlHolder lookAtControls 
@@ -93,6 +105,8 @@ namespace Blanca
                 humanoidIkSolver.HeadIkSolver,
                 lookAtControls);
 
+            lookAtControls.UpdateLookAtTargetCurve(sqrLookAtTargetModifier);
+
             //---- Emotions
             BlancaEmotionsData emotionsData = new BlancaEmotionsData(personality);
 
@@ -100,7 +114,7 @@ namespace Blanca
             MovementTrackerEvent movementTrackerEvent = new MovementTrackerEvent(kinematicData);
             RotationTrackerEvent rotationTrackerEvent = new RotationTrackerEvent(kinematicData, rotationTriggerDotThreshold);
 
-
+            
 
             //---- <INJECTION: Self Objects> ----
             _motor.CharacterController = motorHandler;
@@ -124,9 +138,10 @@ namespace Blanca
             entity.MovementTrackerEvent = movementTrackerEvent;
             entity.RotationTrackerEvent = rotationTrackerEvent;
 
+
             //---- <INJECTION: Ticker> ----
             ticker.AddCallbackReceiver(motorControl);
-            ticker.AddCallbackReceiver(_characterTransformHandler);
+            ticker.AddCallbackReceiver(blancaTransform);
             ticker.AddCallbackReceiver(kinematicDataHandler);
             ticker.AddCallbackReceiver(ikControls);
 

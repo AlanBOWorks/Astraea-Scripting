@@ -76,28 +76,13 @@ namespace Blanca
     {
         public static HumanoidIKSolver HumanoidIkSolver = null;
         public static BlancaLookAtControlHolder LookAtControls = null;
-        public static IHeadIKSolver HeadIkSolver => HumanoidIkSolver.HeadIkSolver;
+        public static HeadLookAtSolverBase HeadIkSolver => HumanoidIkSolver.HeadIkSolver;
         private static ICharacterTransformData CharacterTransform => BlancaUtilsTransform.CharacterTransform;
         public static IKinematicVelocity Velocity => BlancaUtilsKinematic.KinematicVelocity;
 
         private static IPlayerTransformData PlayerTransform => PlayerUtilsTransform.TransformData;
         public static bool IsLeftHanded() => BlancaEntitySingleton.Instance.Parameters.IsLeftMainHand;
-
-        public static void LerpToZero(float speedChange = 1f)
-        {
-            HeadIkSolver.ModifyWeight(-Timing.DeltaTime * speedChange);
-        }
-
-        public static void LerpToTargetWeight(float target, float speedChange = 1f)
-        {
-            IHeadIKSolver headIkSolver = HeadIkSolver;
-            target = Mathf.Lerp(headIkSolver.GetAverageWeight(), target, Timing.DeltaTime * speedChange);
-            headIkSolver.SetWeight(target);
-        }
-        public static Vector3 CurrentHeadLookAtPoint()
-        {
-            return HeadIkSolver.GetHeadLookPoint();
-        }
+        
 
         public static void SetLookPoint(Vector3 targetPoint)
         {
@@ -106,7 +91,7 @@ namespace Blanca
 
         public static void LookAtPoint(Vector3 targetPoint, float targetWeight = 1)
         {
-            IHeadIKSolver headIkSolver = HeadIkSolver;
+            IIKSolver headIkSolver = HeadIkSolver;
             headIkSolver.SetTarget(targetPoint);
             headIkSolver.SetWeight(targetWeight);
         }

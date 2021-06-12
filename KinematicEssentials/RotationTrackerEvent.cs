@@ -30,10 +30,10 @@ namespace KinematicEssentials
             _listeners = new List<IRotationTriggerListener>(PredictedAmountOfListeners);
             _trackingRotation = trackingRotation;
             DotAngleThreshold = dotAngleThreshold;
-
-            /*if (true) //debug
+            /*
+            if (true) //debug
             {
-                Listeners.Add(new DebugRotationEvent());
+                _listeners.Add(new DebugRotationEvent());
             }*/
 
             _angleHandle = Timing.RunCoroutine(_CheckForAngle());
@@ -73,7 +73,8 @@ namespace KinematicEssentials
                     }
 
                     _isCheckingForLong = false;
-                    InvokeLargeAngleEvent(angle);
+                    bool isRightRotation = DotAngleRightValue() > 0;
+                    InvokeLargeAngleEvent(angle, isRightRotation);
                 }
                 else
                 {
@@ -107,11 +108,18 @@ namespace KinematicEssentials
                 _trackingRotation.NormalizedCurrentRotationForward);
         }
 
-        private void InvokeLargeAngleEvent(float dotAngle)
+        private float DotAngleRightValue()
+        {
+            return Vector3.Dot(
+                _lastForwardCheck,
+                _trackingRotation.NormalizedCurrentRotationRight);
+        }
+
+        private void InvokeLargeAngleEvent(float dotAngle, bool isRight)
         {
             foreach (IRotationTriggerListener listener in _listeners)
             {
-                listener.InLargeAngle(dotAngle);
+                listener.InLargeAngle(dotAngle, isRight);
             }
         }
 
@@ -122,24 +130,22 @@ namespace KinematicEssentials
                 listener.InReturnToForward(angle);
             }
         }
-
-#if UNITY_EDITOR
-        private class DebugRotationEvent : IRotationTriggerListener
-        {
-            public void InLargeAngle(float dotAngle)
-            {
-                Debug.Log($"On long Rotation: {dotAngle}");
-            }
-
-            public void InReturnToForward(float dotAngle)
-            {
-                Debug.Log($"On short Rotation: {dotAngle}");
-            }
-        } 
-#endif
-
     }
 
+#if UNITY_EDITOR
+    public class DebugRotationEvent : IRotationTriggerListener
+    {
+        public void InLargeAngle(float dotAngle, bool isRight)
+        {
+            Debug.Log($"On long Rotation: {dotAngle} / {isRight}");
+        }
+
+        public void InReturnToForward(float dotAngle)
+        {
+            Debug.Log($"On short Rotation: {dotAngle}");
+        }
+    }
+#endif
 
     public interface IRotationTriggerHolder
     {
@@ -149,7 +155,7 @@ namespace KinematicEssentials
 
     public interface IRotationTriggerListener
     {
-        void InLargeAngle(float dotAngle);
+        void InLargeAngle(float dotAngle, bool isRight);
         void InReturnToForward(float dotAngle);
     }
 }

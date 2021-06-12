@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using AIEssentials;
 using KinematicEssentials;
 using MEC;
 using SharedLibrary;
@@ -22,12 +23,26 @@ namespace IKEssentials
     public class LookAtTarget : ILookAtControl
     {
         public Vector3 TargetPoint { get; private set; }
+        public AnimationCurve SqrCloseModifier { set; private get; }
 
         [ShowInInspector, PropertyRange(-10, 10)]
         public float LookAtWeight { get; set; }
+
+        public LookAtTarget()
+        {}
+
+        public LookAtTarget(AnimationCurve sqrDistanceCloseModifier)
+        {
+            SqrCloseModifier = sqrDistanceCloseModifier;
+        }
+
         public Vector3 PointOfLookAt(Vector3 headReferencePoint)
         {
-            return Vector3.LerpUnclamped(Vector3.zero, TargetPoint, LookAtWeight);
+            if (SqrCloseModifier == null) return Vector3.LerpUnclamped(Vector3.zero, TargetPoint, LookAtWeight);
+
+            Vector3 closeOffset = TargetPoint - headReferencePoint;
+            closeOffset *= SqrCloseModifier.Evaluate(closeOffset.sqrMagnitude);
+            return Vector3.LerpUnclamped(Vector3.zero, TargetPoint + closeOffset, LookAtWeight);
         }
 
         private CoroutineHandle _trackHandle;
@@ -55,9 +70,9 @@ namespace IKEssentials
 
     public class LookAtMovement : ILookAtControl
     {
-        public IKinematicVelocity Velocity { set; private get; }
+        public IKinematicData Velocity { set; private get; }
         public float MagnitudeModifier;
-        public LookAtMovement(IKinematicVelocity velocity, float magnitudeModifier)
+        public LookAtMovement(IKinematicData velocity, float magnitudeModifier)
         {
             Velocity = velocity;
             MagnitudeModifier = magnitudeModifier;

@@ -26,6 +26,7 @@ namespace KinematicEssentials
         public float CurrentSpeed => Velocity.CurrentSpeed;
 
         public Vector3 NormalizedCurrentRotationForward => Rotation.NormalizedCurrentRotationForward;
+        public Vector3 NormalizedCurrentRotationRight => Rotation.NormalizedCurrentRotationRight;
         public Quaternion CurrentRotation => Rotation.CurrentRotation;
         public Vector3 NormalizedDesiredRotationForward => Rotation.NormalizedDesiredRotationForward;
     }
@@ -52,6 +53,7 @@ namespace KinematicEssentials
         private Vector3 CurrentRotationForward { get; set; }
 
         public Vector3 NormalizedCurrentRotationForward { get; private set; }
+        public Vector3 NormalizedCurrentRotationRight { get; private set; }
 
         [ShowInInspector,DisableInPlayMode,DisableInEditorMode]
         private Vector3 DesiredRotationForward { get; set; }
@@ -70,10 +72,11 @@ namespace KinematicEssentials
         {
             KinematicMotorHandler motorHandler = handler;
 
-            CurrentVelocity = motorHandler.DesiredVelocity;
+            CurrentVelocity = motorHandler.CurrentVelocity;
             CurrentRotation = motorHandler.CurrentRotation;
             CurrentRotationForward = motorHandler.CurrentRotationForward;
             NormalizedCurrentRotationForward = CurrentRotationForward.normalized;
+            NormalizedCurrentRotationRight = referenceTransform.right;
 
             DesiredVelocity = motorHandler.DesiredVelocity;
             DesiredRotationForward = motorHandler.DesiredRotationForward;
@@ -134,6 +137,7 @@ namespace KinematicEssentials
     public interface IKinematicNormalizedRotation
     {
         Vector3 NormalizedCurrentRotationForward { get; }
+        Vector3 NormalizedCurrentRotationRight { get; }
 
     }
 }

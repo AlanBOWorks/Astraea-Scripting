@@ -21,6 +21,9 @@ namespace PlayerEssentials
         [Title("Keyboard - Data")]
         [ShowInInspector, DisableInPlayMode, DisableInEditorMode]
         public Vector3 GlobalDesiredDirection { get; private set; }
+
+        public Vector3 GlobalDesiredVelocity { get; set; }
+
         public void UpdateGlobalDirection(Vector3 direction)
         {
             GlobalDesiredDirection = direction;

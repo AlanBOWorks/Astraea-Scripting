@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using ___ProjectExclusive;
+using AIEssentials;
 using IKEssentials;
 using KinematicEssentials;
 using MEC;
@@ -12,27 +13,41 @@ namespace Blanca
 {
     public class BlancaLookAtControlHolder : BlancaLookAtStructure<ILookAtControl>
     {
-        public BlancaLookAtControlHolder(ICharacterTransformData transformData, IKinematicVelocity velocity) : base()
+        public readonly LookAtTarget LookAtTarget;
+        public readonly LookAtMovement LookAtMovement;
+        public readonly LookAtRandom LookAtRandom;
+        public readonly LookAtTarget LookAtPlayer;
+
+        public BlancaLookAtControlHolder(ICharacterTransformData transformData, IKinematicData kinematicData) : base()
         {
-            LookAtTarget lookAtTarget = new LookAtTarget();
-            LookAtMovement lookAtMovement = new LookAtMovement(velocity,3); // watch further in the movement
-            LookAtRandom lookAtRandom = new LookAtRandom(transformData.Head, new SRange(1,7));
-            AddBasicSetup(lookAtTarget,lookAtMovement,lookAtRandom);
+            LookAtTarget = new LookAtTarget();
+            LookAtMovement = new LookAtMovement(kinematicData,3); // watch further in the movement
+            LookAtRandom = new LookAtRandom(transformData.Head, new SRange(1,7));
+            AddBasicSetup(LookAtTarget,LookAtMovement,LookAtRandom);
+
+            LookAtPlayer = new LookAtTarget();
+            Elements.Add(LookAtPlayer);
 
             Timing.RunCoroutine(WaitUntilPlayerIsInstantiated());
             IEnumerator<float> WaitUntilPlayerIsInstantiated()
             {
                 PlayerEntity playerEntity = PlayerEntitySingleton.Instance.Entity;
                 yield return Timing.WaitUntilTrue(PlayerInstantiated);
-                ICharacterTransformData headData = playerEntity.CharacterTransformData;
-                LookAtHeadData lookAtHead = new LookAtHeadData(headData);
-                Elements.Add(lookAtHead);
+
+                LookAtPlayer.TrackTransform(
+                    playerEntity.CharacterTransformData.GetLookAtPoint(), Vector3.zero);
 
                 bool PlayerInstantiated()
                 {
                     return playerEntity.CharacterTransformData != null;
                 }
             }
+        }
+
+        public void UpdateLookAtTargetCurve(AnimationCurve sqrDistanceCurve)
+        {
+            LookAtTarget.SqrCloseModifier = sqrDistanceCurve;
+            LookAtPlayer.SqrCloseModifier = sqrDistanceCurve;
         }
 
         public Vector3 CalculatePointLookAt(Vector3 headReferencePoint)

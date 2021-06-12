@@ -20,6 +20,7 @@ namespace Companion
 
         public IKEssentials.HoldHandHandler HoldHandHandler = null;
 
+        public bool IsPlayerRightHanded = true;
     }
 
     /// <summary>

@@ -6,6 +6,7 @@ namespace Player
 {
     public class PlayerEntityTracker : MonoBehaviour, ISerializationCallbackReceiver
     {
+#if UNITY_EDITOR
         [TabGroup("Entity"), PropertyOrder(-100)]
         [ShowInInspector, HideInInlineEditors, InlineProperty, HideInPlayMode]
         public PlayerEntitySingleton Singleton;
@@ -26,6 +27,7 @@ namespace Player
 
         public void OnAfterDeserialize()
         {
-        }
+        } 
+#endif
     }
 }

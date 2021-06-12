@@ -27,6 +27,7 @@ namespace Player
         {
             Vector3 targetVelocity = _inputData.GlobalDesiredDirection;
             if (_inputData.IsSprintPress) targetVelocity *= _sprintModifier;
+            _inputData.GlobalDesiredVelocity = targetVelocity;
 
             Vector3 currentVelocity = _motor.DesiredVelocity;
             float deltaVariation =
