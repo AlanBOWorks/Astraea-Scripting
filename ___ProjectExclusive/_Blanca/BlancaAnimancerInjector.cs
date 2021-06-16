@@ -1,6 +1,7 @@
 ﻿using Animancer;
 using Animators;
 using Blanca;
+using IKEssentials;
 using KinematicEssentials;
 using SharedLibrary;
 using Sirenix.OdinInspector;
@@ -18,12 +19,13 @@ namespace AnimancerEssentials
 
 
         [Title("Animation Settings")]
-        [TabGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _idleClip = null;
-        [TabGroup("Body"), SerializeField, HideInPlayMode] private MixerTransition2D _defaultMovement = null;
-        [TabGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _breathing = null;
+        [BoxGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _idleClip = null;
+        [BoxGroup("Body"), SerializeField, HideInPlayMode] private MixerTransition2D _defaultMovement = null;
+        [BoxGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _breathing = null;
+        [BoxGroup("Body"), SerializeField, HideInPlayMode] private AnimationClip _torchIdle = null;
 
-        [TabGroup("Facial"), SerializeField, HideInPlayMode] private AnimationClip _idleExpression = null;
-        [TabGroup("Facial"), SerializeField, HideInPlayMode] private AnimationClip _blinkExpression = null;
+        [BoxGroup("Facial"), SerializeField, HideInPlayMode] private AnimationClip _idleExpression = null;
+        [BoxGroup("Facial"), SerializeField, HideInPlayMode] private LinearMixerTransition _blinkExpressions = null;
 
 
         //Persistent
@@ -32,6 +34,8 @@ namespace AnimancerEssentials
         [TabGroup("Facial"), SerializeField]
         private EyesBlinkerHandler _blinkerHandler = new EyesBlinkerHandler();
 
+        [TabGroup("Facial"), SerializeField] 
+        private EyesLidHandler lidHandler = null;
 
 
         public override void DoInjection()
@@ -59,27 +63,37 @@ namespace AnimancerEssentials
             MovementStatesHandler movementStatesHandler = new MovementStatesHandler(animancerBaseStates);
 
             humanoidLayers.Addition.Play(_breathing);
+            humanoidLayers.UpperHalf.GetOrCreateState(_torchIdle);
 
             facialLayers.Base.GetOrCreateState(_idleExpression).Weight = 1; //TODO make an expression handler
-            facialLayers.Override.GetOrCreateState(_blinkExpression).Weight = 1;
+            facialLayers.Override.GetOrCreateState(_blinkExpressions).Weight = 1;
+
+
 
             //---- Animancer: Handlers
             animancerMovementInjector.Injection(kinematicData);
             animancerMovementInjector.AddMixer(_defaultMovement.Transition);
 
+            BlancaEmotionAnimationsHolder emotionAnimationsHolder 
+                = new BlancaEmotionAnimationsHolder(facialLayers);
+
 
             //---- Blinker
             AnimancerLayerBlinker blinker = new AnimancerLayerBlinker(facialLayers.Override);
             _blinkerHandler.InjectHolder(blinker);
-
+            _blinkerHandler.Listeners.Add(lidHandler);
 
             //---- ENTITY (Injections)
             entity.AnimancerHumanoidLayers = humanoidLayers;
             entity.AnimancerFacialLayers = facialLayers;
             entity.BlinkerHandler = _blinkerHandler;
+            entity.EmotionAnimations = emotionAnimationsHolder; 
 
             //---- ENTITY (projections)
             entity.MovementTrackerEvent.AddListener(movementStatesHandler);
+
+            BlinkerEmotionListener blinkerEmotionListener = new BlinkerEmotionListener(_blinkExpressions);
+            entity.EmotionsData.Listeners.Add(blinkerEmotionListener);
 
             //---- TICKER
             ticker.AddCallbackReceiver(animancerMovementInjector);
@@ -98,7 +112,7 @@ namespace AnimancerEssentials
             _idleClip = null;
             _defaultMovement = null;
             _idleExpression = null;
-            _blinkExpression = null;
+            _blinkExpressions = null;
         }
 
     }

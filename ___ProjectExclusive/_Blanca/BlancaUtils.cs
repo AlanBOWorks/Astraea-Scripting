@@ -75,7 +75,9 @@ namespace Blanca
     public static class BlancaUtilsIK
     {
         public static HumanoidIKSolver HumanoidIkSolver = null;
-        public static BlancaLookAtControlHolder LookAtControls = null;
+        public static LookAtTarget LookAtTargetCalculator = null;
+        public static IBlancaLookAtModifiable<float> FullHeadWeights = null;
+
         public static HeadLookAtSolverBase HeadIkSolver => HumanoidIkSolver.HeadIkSolver;
         private static ICharacterTransformData CharacterTransform => BlancaUtilsTransform.CharacterTransform;
         public static IKinematicVelocity Velocity => BlancaUtilsKinematic.KinematicVelocity;

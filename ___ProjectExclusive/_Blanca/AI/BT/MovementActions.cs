@@ -56,8 +56,8 @@ namespace Blanca
             var rotationControl = BlancaUtilsKinematic.RotationControls;
             rotationControl.Movement.RotationWeight = target;
 
-            var lookAtControl = BlancaUtilsIK.LookAtControls;
-            lookAtControl.Movement.LookAtWeight = target;
+            var lookAtControl = BlancaUtilsIK.FullHeadWeights;
+            lookAtControl.Movement = target;
         }
     }
 
@@ -114,9 +114,9 @@ namespace Blanca
             rotationControl.Movement.RotationWeight = .7f;
             rotationControl.Copy.RotationWeight = .3f;
 
-            var lookAtControl = BlancaUtilsIK.LookAtControls;
-            lookAtControl.AtPlayer.LookAtWeight = .7f;
-            lookAtControl.Movement.LookAtWeight = .3f;
+            var lookAtControl = BlancaUtilsIK.FullHeadWeights;
+            lookAtControl.AtPlayer = .7f;
+            lookAtControl.Movement = .3f;
         }
 
         protected static void DisableWeights()
@@ -128,9 +128,9 @@ namespace Blanca
             rotationControl.Movement.RotationWeight = 0;
             rotationControl.Copy.RotationWeight = 0f;
 
-            var lookAtControl = BlancaUtilsIK.LookAtControls;
-            lookAtControl.AtPlayer.LookAtWeight = 0;
-            lookAtControl.Movement.LookAtWeight = 0f;
+            var lookAtControl = BlancaUtilsIK.FullHeadWeights;
+            lookAtControl.AtPlayer = 0;
+            lookAtControl.Movement = 0f;
 
         }
     }
@@ -162,9 +162,9 @@ namespace Blanca
             rotationControl.Movement.RotationWeight = 0f;
             rotationControl.Copy.RotationWeight = 0f;
 
-            var lookAtControl = BlancaUtilsIK.LookAtControls;
-            lookAtControl.AtPlayer.LookAtWeight = 0f;
-            lookAtControl.Movement.LookAtWeight = 0f;
+            var lookAtControl = BlancaUtilsIK.FullHeadWeights;
+            lookAtControl.AtPlayer = 0f;
+            lookAtControl.Movement = 0f;
         }
 
         private static void EnableWeights()
@@ -178,9 +178,9 @@ namespace Blanca
             rotationControl.Movement.RotationWeight = .3f;
             rotationControl.Copy.RotationWeight = 1f;
 
-            var lookAtControl = BlancaUtilsIK.LookAtControls;
-            lookAtControl.AtPlayer.LookAtWeight = .3f;
-            lookAtControl.Movement.LookAtWeight = .7f;
+            var lookAtControl = BlancaUtilsIK.FullHeadWeights;
+            lookAtControl.AtPlayer = .3f;
+            lookAtControl.Movement = .7f;
         }
     }
 
@@ -222,8 +222,8 @@ namespace Blanca
             var rotationControl = BlancaUtilsKinematic.RotationControls;
             rotationControl.Movement.RotationWeight = target;
 
-            var lookAtControl = BlancaUtilsIK.LookAtControls;
-            lookAtControl.Movement.LookAtWeight = target;
+            var headWeights = BlancaUtilsIK.FullHeadWeights;
+            headWeights.Movement = target;
         }
     }
 }

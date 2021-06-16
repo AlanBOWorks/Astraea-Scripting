@@ -11,14 +11,13 @@ namespace SharedLibrary
         [SerializeField] private MonoInjector[] _sequenceOfInjections = new MonoInjector[0];
 
         public bool destroyGObjectAfter = false;
-        public bool destroyElementsAfter = false;
 
         private void Awake()
         {
             foreach (MonoInjector injector in _sequenceOfInjections)
             {
                 injector.DoInjection();
-                if(destroyElementsAfter) Destroy(injector);
+                if(injector.destroyOnInjection) Destroy(injector);
             }
 
         }
@@ -34,8 +33,10 @@ namespace SharedLibrary
         }
     }
 
+    [Serializable]
     public abstract class MonoInjector : MonoBehaviour
     {
+        public bool destroyOnInjection = true;
         public abstract void DoInjection();
     }
 }

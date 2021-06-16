@@ -83,6 +83,9 @@ namespace AnimancerEssentials
         public T Base => SerializedData[BaseIndex];
         public T Addition => SerializedData[AdditionIndex];
         public T Blink => SerializedData[BlinkIndex];
+        /// <summary>
+        /// Used for scripted animations that should ignore everything (even blinks)
+        /// </summary>
         public T Override => SerializedData[OverrideIndex];
         public T[] SerializedData { get; protected set; }
 

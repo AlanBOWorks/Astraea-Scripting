@@ -14,6 +14,10 @@ namespace Companion
     /// </summary>
     public class CompanionEntity
     {
+        [Title("Objects")] 
+        public LookAtTracker LookAtTracker = null;
+
+        [Title("Data")]
         public float DistanceOfSeparation = -1f; //Default negative for checks
         public Vector3 VectorTowardsPlayer;
         public Vector3 NormalizedVectorTowardsPlayer;
@@ -35,12 +39,12 @@ namespace Companion
             Entity = new CompanionEntity();
         }
         public static CompanionEntitySingleton Instance { get; } = new CompanionEntitySingleton();
-
-
         public CompanionEntityScriptableBehaviour EntityCaller = null;
 
         [SerializeField, HideInEditorMode, HideInPlayMode, HideInInlineEditors, HideDuplicateReferenceBox]
-        public CompanionEntity Entity;
+        public CompanionEntity Entity = null;
+
+        public CoroutineLoopHandler CoroutineLoopHandler = null;
     }
 
 }

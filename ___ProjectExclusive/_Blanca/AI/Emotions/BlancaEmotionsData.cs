@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MEC;
 using Sirenix.OdinInspector;
 using SMaths;
 using UnityEngine;
@@ -13,160 +14,170 @@ namespace Blanca
         T Curiosity { get; }
     }
 
-    
-    // It will be used as a reference type (normally by the director
-    // or an event manager waits for an specific emotion)
-    public class BlancaEmotionData
+    public interface IBlancaEmotionsHandler<in T>
     {
-        [ShowInInspector]
-        private float _value;
-        public float Value
-        {
-            get => _value;
-            set
-            {
-                _value = value;
-                _tracker.TrackValue(_value);
-            }
-        }
-
-        private readonly EmotionTracker _tracker;
-
-        public BlancaEmotionData(IEmotionHolderListener holderListener, SRange trackRange, float currentValue = 0)
-        {
-            _tracker = new EmotionTracker(trackRange,currentValue,holderListener);
-        }
-
-
-        internal class EmotionTracker
-        {
-            public SRange TriggerRange;
-            public readonly IEmotionHolderListener Listener;
-            public EmotionTracker(SRange trackRange, float currentValue, IEmotionHolderListener listener)
-            {
-                TriggerRange = trackRange;
-                this.Listener = listener;
-                SetState();
-                void SetState()
-                {
-                    if (currentValue >= TriggerRange.maxValue)
-                    {
-                        _state = State.Positive;
-                        return;
-                    }
-
-                    if (currentValue <= TriggerRange.minValue)
-                    {
-                        _state = State.Negative;
-                        return;
-                    }
-
-                    _state = State.Neutral;
-                }
-            }
-
-            public enum State
-            {
-                Positive,
-                Neutral,
-                Negative
-            }
-            private State _state;
-            public void TrackValue(float target) 
-            {
-                switch (_state)
-                {
-                    case State.Positive:
-                        CheckNegative(target);
-                        break;
-                    default:
-                    case State.Neutral:
-                        if (CheckPositive(target)) break;
-                        CheckNegative(target);
-                        break;
-                    case State.Negative:
-                        CheckPositive(target);
-                        break;
-                }
-            }
-
-            /// <returns>Just to avoid checking negative</returns>
-            private bool CheckPositive(float target)
-            {
-                if (target <= TriggerRange.maxValue) return false;
-                Listener.OnPositiveEmotion();
-                _state = State.Positive;
-                return true;
-            }
-
-
-            private void CheckNegative(float target)
-            {
-                if (target >= TriggerRange.minValue) return;
-                Listener.OnNegativeEmotion();
-
-                _state = State.Negative;
-            }
-        }
+        T Happiness { set; }
+        T Courage { set; }
+        T Curiosity { set; }
     }
-    public class BlancaEmotionsData : IBlancaEmotions<BlancaEmotionData>, IBlancaEmotions<float>,
-        IEmotionHolderListener
+    
+    public class BlancaEmotionsData : IBlancaEmotions<float>, IBlancaEmotionsHandler<float>
     {
-        [ShowInInspector]
-        public BlancaEmotionData Happiness { get; }
-        [ShowInInspector]
-        public BlancaEmotionData Courage { get;}
-        [ShowInInspector]
-        public BlancaEmotionData Curiosity { get; }
+        [Title("Values")]
+        public float Happiness
+        {
+            get => _happiness;
+            set => _happiness = value;
+        }
 
-        float IBlancaEmotions<float>.Happiness => Happiness.Value;
-        float IBlancaEmotions<float>.Courage => Courage.Value;
-        float IBlancaEmotions<float>.Curiosity => Curiosity.Value;
+        [ShowInInspector]
+        public float Courage
+        {
+            get => _courage;
+            set => _courage = value;
+        }
 
-        public readonly List<IEmotionsListener> EmotionsListeners;
-
+        [ShowInInspector]
+        public float Curiosity
+        {
+            get => _curiosity;
+            set => _curiosity = value;
+        }
 
         private const int PredictedListeners = 4;
-        public BlancaEmotionsData(IBlancaEmotions<SRange> emotionParameters)
-        {
-            Happiness = new BlancaEmotionData(this,emotionParameters.Happiness);
-            Courage = new BlancaEmotionData(this, emotionParameters.Courage);
-            Curiosity = new BlancaEmotionData(this, emotionParameters.Curiosity);
 
-            EmotionsListeners = new List<IEmotionsListener>(PredictedListeners);
+        [Title("Listeners")]
+        [ShowInInspector]
+        public readonly List<IEmotionListener> Listeners;
+
+        [ShowInInspector]
+        private float _happiness;
+
+        [ShowInInspector]
+        private float _courage;
+        [ShowInInspector]
+        private float _curiosity;
+
+        public enum EmotionType
+        {
+            Happiness,
+            Courage,
+            Curiosity
         }
 
+        public BlancaEmotionsData(int predictedAmountOfListeners = PredictedListeners)
+        {
+            Listeners = new List<IEmotionListener>(predictedAmountOfListeners);
+
+#if UNITY_EDITOR
+            Listeners.Add(new DebugListener());
+#endif
+
+        }
         /// <summary>
         /// Used on load saved-game 
         /// </summary>
-        public BlancaEmotionsData(IBlancaEmotions<SRange> emotionParameters, IBlancaEmotions<float> emotionValues)
+        public BlancaEmotionsData(IBlancaEmotions<float> emotionValues) : this()
         {
-            Happiness = new BlancaEmotionData(this, emotionParameters.Happiness, emotionValues.Happiness);
-            Courage = new BlancaEmotionData(this, emotionParameters.Courage, emotionValues.Courage);
-            Curiosity = new BlancaEmotionData(this, emotionParameters.Curiosity, emotionValues.Curiosity);
+            _happiness = emotionValues.Happiness;
+            _courage = emotionValues.Courage;
+            _curiosity = emotionValues.Curiosity;
         }
 
-        private void InvokeListeners()
+
+        /// <summary>
+        /// Used in emotion checks.
+        /// <example><br></br>
+        /// (eg: checking if the character has courage enough;<br></br>
+        /// checking if the character has enough curiosity; etc...)
+        /// </example> </summary>
+        public void InvokeListeners(EmotionType targetType)
         {
-            foreach (IEmotionsListener listener in EmotionsListeners)
+            InvokeListeners(targetType, 0, false);
+        }
+        
+        public void InvokeListenersWithOverride(EmotionType targetType, float targetValue)
+        {
+            InvokeListeners(targetType,targetValue, true);
+        }
+        
+        [Button]
+        private void InvokeListeners(EmotionType targetType, float targetValue, bool changeValue)
+        {
+            // Instant
+            float intensity;
+            switch (targetType)
             {
-                listener.OnStateSwitch(this);
+                case EmotionType.Happiness:
+                    HandleValue(ref _happiness);
+                    foreach (IEmotionListener listener in Listeners)
+                    {
+                        listener.OnTriggerHappiness(intensity);
+                    }
+                    break;;
+                default:
+                case EmotionType.Courage:
+                    HandleValue(ref _courage);
+                    foreach (IEmotionListener listener in Listeners)
+                    {
+                        listener.OnTriggerCourage(intensity);
+                    }
+                    break;
+                case EmotionType.Curiosity:
+                    HandleValue(ref _curiosity);
+                    foreach (IEmotionListener listener in Listeners)
+                    {
+                        listener.OnTriggerCuriosity(intensity);
+                    }
+                    break;
+            }
+
+            void HandleValue(ref float dataHolder)
+            {
+                if (changeValue)
+                {
+                    intensity = targetValue;
+                    dataHolder = targetValue;
+                }
+                else
+                {
+                    intensity = dataHolder;
+                }
             }
         }
 
-        public void OnPositiveEmotion() => InvokeListeners();
 
-        public void OnNegativeEmotion() => InvokeListeners();
+
+#if UNITY_EDITOR
+        internal class DebugListener : IEmotionListener
+        {
+            public void OnTriggerHappiness(float intensity)
+            {
+                Debug.Log($"Happiness trigger: {intensity}");
+            }
+
+            public void OnTriggerCuriosity(float intensity)
+            {
+                Debug.Log($"Curiosity trigger: {intensity}");
+            }
+
+            public void OnTriggerCourage(float intensity)
+            {
+                Debug.Log($"Courage trigger: {intensity}");
+            }
+        } 
+#endif
+
     }
 
 
-    public interface IEmotionsListener
+    public interface IEmotionListener
     {
-        void OnStateSwitch(IBlancaEmotions<float> currentEmotions);
+        void OnTriggerHappiness(float intensity);
+        void OnTriggerCourage(float intensity);
+        void OnTriggerCuriosity(float intensity);
+
     }
-    public interface IEmotionHolderListener
-    {
-        void OnPositiveEmotion();
-        void OnNegativeEmotion();
-    }
+
+
 }

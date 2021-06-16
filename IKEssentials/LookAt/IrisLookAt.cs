@@ -42,12 +42,16 @@ namespace IKEssentials
 
         private void OnEnable()
         {
-            _randomHandle = Timing.RunCoroutine(_UpdateRandom());
+            Timing.ResumeCoroutines(_randomHandle);
         }
         private void OnDisable()
         {
-            Timing.KillCoroutines(_randomHandle);
+            Timing.PauseCoroutines(_randomHandle);
             ResetRotations();
+        }
+        private void Start()
+        {
+            _randomHandle = Timing.RunCoroutine(_UpdateRandom());
         }
 
         [Button]
@@ -65,6 +69,7 @@ namespace IKEssentials
         private float _timer = 0;
 
         public Vector3 ClampedLocalDirection { get; private set; }
+        public Quaternion IrisRotation { get; private set; }
         private void Update()
         {
             if (_timer > DestinationUpdateRate)
@@ -90,6 +95,7 @@ namespace IKEssentials
 
                 Quaternion targetRotation = ProjectedDirectionOnHead();
                 targetRotation = Quaternion.LerpUnclamped(_bodyHead.rotation, targetRotation, Weight);
+                IrisRotation = targetRotation;
 
                 _leftIrisRotation.rotation = targetRotation;
                 _rightIrisRotation.rotation = targetRotation;
@@ -108,7 +114,7 @@ namespace IKEssentials
         private IEnumerator<float> _UpdateRandom()
         {
             bool doneRandom = false;
-            while (enabled)
+            while (transform)
             {
                 if (doneRandom)
                 {

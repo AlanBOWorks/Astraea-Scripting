@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Animators;
 using MEC;
 using Sirenix.OdinInspector;
@@ -20,19 +21,22 @@ namespace CharacterCreator
         [Title("Blinker")]
         public EyesBlinkerHandler Blinker = new EyesBlinkerHandler();
 
-        [Title("Editions"), GUIColor(.6f,.6f,.2f)]
-        public bool IsEditingMode = false;
 
 
-        private void OnEnable()
+        private void Start()
         {
             Blinker.InjectHolder(this);
             Blinker.StartBlink();
         }
 
+        private void OnEnable()
+        {
+            Blinker.Enabled = true;
+        }
+
         private void OnDisable()
         {
-            Blinker.SafeStopBlinking();
+            Blinker.Enabled = false;
         }
 
         [Button(ButtonSizes.Large),HideInPlayMode, ShowIf("IsEditingMode"), GUIColor(.6f, .6f, .2f)]

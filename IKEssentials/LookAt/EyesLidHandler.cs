@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace IKEssentials
 {
-    public class EyesLidHandler : MonoBehaviour
+    public class EyesLidHandler : MonoBehaviour, IBlinkListener
     {
         [Title("References")]
         [SerializeField] private IrisLookAt irisLookAt = null;
@@ -33,15 +33,18 @@ namespace IKEssentials
             LidDownRotationAddition = Quaternion.Euler(parameters.lidDownLimits);
 
             parameters = null;
+            _blinkModifier = 1;
         }
 
-        // Update is called once per frame
+        [ShowInInspector,Range(0,1),DisableInEditorMode]
+        private float _blinkModifier;
         private void LateUpdate()
         {
             float yLookAt = irisLookAt.ClampedLocalDirection.y;
             float upPercentage = upRange.PercentageUnitInterval(yLookAt);
             float downPercentage = downRange.PercentageUnitInterval(yLookAt);
-
+            upPercentage *= _blinkModifier;
+            downPercentage *= _blinkModifier;
 
             Quaternion rotationOffset = Quaternion.LerpUnclamped(
                 Quaternion.identity, 
@@ -61,6 +64,11 @@ namespace IKEssentials
         {
             public Vector3 lidUpLimits;
             public Vector3 lidDownLimits;
+        }
+
+        public void DoBlink(float blinkPercentage)
+        {
+            _blinkModifier = 1 - blinkPercentage;
         }
     }
 }

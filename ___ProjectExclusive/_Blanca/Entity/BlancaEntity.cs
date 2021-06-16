@@ -127,16 +127,31 @@ namespace Blanca
         public IIKSolver MainHandSolver => HumanoidIkSolver.MainHand;
 
 
+        public LookAtTarget LookAtTargetCalculator { get; private set; }
+        public LookAtTarget LookAtTargetSecondaryCalculator { get; private set; }
+        public LookAtRandom LookAtRandom { get; private set; }
+        public IBlancaLookAtModifiable<float> FullHeadWeights { get; private set; }
+        public BlancaLookWeights HeadLookWeights { get; private set; }
+        public BlancaLookWeights IrisLookWeights { get; private set; }
+
         [TabGroup("Visual handlers", "IK"), ShowInInspector, HideInEditorMode]
-        private BlancaLookAtControlHolder _lookAtControls = null;
-        public BlancaLookAtControlHolder LookAtControls
+        private BlancaHeadIKControl _headIkControl = null;
+
+        public BlancaHeadIKControl HeadIkControl
         {
-            get => _lookAtControls;
+            get => _headIkControl;
             set
             {
-                _lookAtControls = value;
-                BlancaUtilsIK.LookAtControls = value;
+                _headIkControl = value;
+                LookAtTargetCalculator = value.LookAtCalculators.LookAtTarget;
+                LookAtTargetSecondaryCalculator = value.LookAtCalculators.LookAtSecondary;
+                LookAtRandom = value.LookAtCalculators.LookAtRandom;
+                FullHeadWeights = value;
+                HeadLookWeights = value.HeadWeights;
+                IrisLookWeights = value.IrisWeights;
 
+                BlancaUtilsIK.LookAtTargetCalculator = LookAtTargetCalculator;
+                BlancaUtilsIK.FullHeadWeights = value;
             }
         }
 
@@ -146,6 +161,12 @@ namespace Blanca
         {
             get => _emotionsData;
             set => _emotionsData = value;
+        }
+        private BlancaEmotionAnimationsHolder _emotionAnimations;
+        public BlancaEmotionAnimationsHolder EmotionAnimations
+        {
+            get => _emotionAnimations;
+            set => _emotionAnimations = value;
         }
 
 
@@ -186,6 +207,7 @@ namespace Blanca
 
         public BlancaEntity Entity = null;
         public BlancaPropsEntity Props = null;
+        public CoroutineLoopHandler CoroutineLoopHandler = null;
 
         public static BlancaEntity GetEntity() => Instance.Entity;
     }
@@ -193,7 +215,12 @@ namespace Blanca
     [Serializable]
     public class BlancaPropsEntity
     {
+        [ShowInInspector]
+        public TorchTransformController TransformController = null;
+        
         public UHandTargetBase TorchLeftTarget = null;
         public UHandTargetBase TorchRightTarget = null;
+
+
     }
 }

@@ -29,9 +29,7 @@ namespace IKEssentials
         public readonly Transform RightTarget;
         public readonly Transform LeftTarget;
 
-        private IIKSolver _rightSolver;
         private IIKSolver _rightOtherHandSolver; //This is the right handed character's left hand
-        private IIKSolver _leftSolver;
         private IIKSolver _leftOtherHandSolver;
 
         public HoldHandHandler(ICharacterDataHolder leftHanded, ICharacterDataHolder rightHanded,
@@ -51,13 +49,11 @@ namespace IKEssentials
             _rightHandedReference = rightHanded.GetTransformData();
             _rightVelocity = rightHanded.GetKinematicData();
             FullHumanoidIKSolver rightHumanoid = rightHanded.GetHumanoidSolver();
-            _rightSolver = rightHumanoid.MainHand;
             _rightOtherHandSolver = rightHumanoid.SecondaryHand;
 
             _leftHandedReference = leftHanded.GetTransformData();
             _leftVelocity = leftHanded.GetKinematicData();
             FullHumanoidIKSolver leftHumanoid = leftHanded.GetHumanoidSolver();
-            _leftSolver = leftHumanoid.MainHand;
             _leftOtherHandSolver = leftHumanoid.SecondaryHand;
         }
 
@@ -156,13 +152,6 @@ namespace IKEssentials
                     = Vector3.SlerpUnclamped(_targetIk.position, positionOfHands,deltaVariation); 
                 _targetIk.rotation 
                     = Quaternion.SlerpUnclamped(_targetIk.rotation,targetRotation, deltaVariation);
-
-                {
-                    _rightSolver.SetTarget(RightTarget.position);
-                    _rightSolver.SetRotation(RightTarget.rotation);
-                    _leftSolver.SetTarget(LeftTarget.position);
-                    _leftSolver.SetRotation(LeftTarget.rotation);
-                }
 
                 yield return Timing.WaitForOneFrame; 
             }

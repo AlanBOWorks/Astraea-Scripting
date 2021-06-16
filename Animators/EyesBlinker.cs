@@ -10,7 +10,7 @@ using Random = UnityEngine.Random;
 namespace Animators
 {
     [Serializable]
-    public class EyesBlinkerHandler
+    public class EyesBlinkerHandler : ISerializationCallbackReceiver
     {
         [Title("References")]
         [SerializeField] private SkinnedMeshRenderer _leftIris = null;
@@ -21,6 +21,9 @@ namespace Animators
             _facialExpressions = holder;
         }
 
+        private List<IBlinkListener> _listeners;
+        public List<IBlinkListener> Listeners => _listeners;
+
 
         private const int IrisFocusBlendIndex = 4;
         private int _blinkedCount;
@@ -30,36 +33,37 @@ namespace Animators
         public SRange OpenSpeed = new SRange(10,24);
 
         [SerializeField]
-        private AnimationCurve _blinkCurve = new AnimationCurve(new Keyframe(0,0),new Keyframe(1,1));
+        private AnimationCurve _blinkClosenessCurve = new AnimationCurve(new Keyframe(0,0),new Keyframe(1,1));
         [SerializeField]
         private AnimationCurve _irisFocusCurve = new AnimationCurve(new Keyframe(0,0), new Keyframe(.7f,1));
         private const float ComparisionThreshold = .01f;
         private int _blinkConsecutiveThreshold = 3;
 
 
-
-        private bool _enabled = false;
-        public CoroutineHandle BlinkingHandle { get; private set; }
-
-        /// <summary>
-        /// Will stop blinking after the animations are done
-        /// </summary>
-        public void SafeStopBlinking()
+        public bool Enabled
         {
-            _enabled = false;
+            set
+            {
+                if (value)
+                    Timing.ResumeCoroutines(_blinkingHandle);
+                else
+                    Timing.PauseCoroutines(_blinkingHandle);
+            }
         }
+
+        private CoroutineHandle _blinkingHandle;
+
 
         public void StartBlink()
         {
-            Timing.KillCoroutines(BlinkingHandle);
-            BlinkingHandle = Timing.RunCoroutine(_StartBlink());
+            Timing.KillCoroutines(_blinkingHandle);
+            _blinkingHandle = Timing.RunCoroutine(_StartBlink());
         }
 
         public float BlinkWeight { get; private set; }
         private IEnumerator<float> _StartBlink()
         {
-            _enabled = true;
-            while (_enabled)
+            while (_facialExpressions != null)
             {
                 //Too guarantee a wait after many consecutive Blinks
                 if (_blinkedCount < _blinkConsecutiveThreshold)
@@ -90,10 +94,14 @@ namespace Animators
                 while (eyesWeight < 1 - ComparisionThreshold)
                 {
                     UpdateWithCurveExpression(1, closeSpeed);
+                    InvokeListeners();
 
-                    yield return Timing.WaitForSeconds(Time.deltaTime);
+                    yield return Timing.WaitForOneFrame;
                 }
+
+                eyesWeight = 1;
                 _facialExpressions.AnimateCloseExpression(1);
+                InvokeListeners();
 
                 yield return Timing.WaitForSeconds(Random.Range(0.1f, .4f));
 
@@ -107,33 +115,58 @@ namespace Animators
                 while (BlinkWeight > 0 + ComparisionThreshold)
                 {
                     UpdateWithCurveExpression(0,openSpeed);
+                    InvokeListeners();
 
                     BlinkWeight = _irisFocusCurve.Evaluate(eyesWeight) * 100;
                     _leftIris.SetBlendShapeWeight(IrisFocusBlendIndex, BlinkWeight);
                     _rightIris.SetBlendShapeWeight(IrisFocusBlendIndex,BlinkWeight);
 
-                    yield return Timing.WaitForSeconds(Time.deltaTime);
+                    yield return Timing.WaitForOneFrame;
                 }
 
-                _facialExpressions.AnimateCloseExpression(0);
-                _leftIris.SetBlendShapeWeight(IrisFocusBlendIndex, 0);
-                _rightIris.SetBlendShapeWeight(IrisFocusBlendIndex, 0);
-
+                eyesWeight = 0;
+                _facialExpressions.AnimateCloseExpression(eyesWeight);
+                _leftIris.SetBlendShapeWeight(IrisFocusBlendIndex, eyesWeight);
+                _rightIris.SetBlendShapeWeight(IrisFocusBlendIndex, eyesWeight);
+                InvokeListeners();
 
                 void UpdateWithCurveExpression(float targetWeight, float deltaSpeed)
                 {
                     eyesWeight = Mathf.Lerp(eyesWeight, targetWeight, Time.deltaTime * deltaSpeed);
 
-                    _facialExpressions.AnimateCloseExpression(_blinkCurve.Evaluate(eyesWeight));
+                    _facialExpressions.AnimateCloseExpression(_blinkClosenessCurve.Evaluate(eyesWeight));
+                }
+
+                void InvokeListeners()
+                {
+                    foreach (IBlinkListener listener in _listeners)
+                    {
+                        listener.DoBlink(eyesWeight);
+                    }
                 }
             }
 
             
+        }
+
+        public void OnBeforeSerialize()
+        {
+            
+        }
+
+        public void OnAfterDeserialize()
+        {
+            _listeners = new List<IBlinkListener>(4);
         }
     }
 
     public interface IBlinkHolder
     {
         void AnimateCloseExpression(float eyesWeight);
+    }
+
+    public interface IBlinkListener
+    {
+        void DoBlink(float blinkPercentage);
     }
 }

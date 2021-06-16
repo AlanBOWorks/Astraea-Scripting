@@ -9,40 +9,36 @@ using UnityEngine;
 
 namespace IKEssentials
 {
-    public interface ILookAtWeight
-    {
-        float LookAtWeight { get; set; }
-    }
+    
 
-    public interface ILookAtControl : ILookAtWeight
+    public interface ILookAtCalculator
     {
-        Vector3 PointOfLookAt(Vector3 headReferencePoint);
+        Vector3 DirectionLookAt(Vector3 headReferencePoint);
     }
 
 
-    public class LookAtTarget : ILookAtControl
+    public class LookAtTarget : ILookAtCalculator
     {
         public Vector3 TargetPoint { get; private set; }
-        public AnimationCurve SqrCloseModifier { set; private get; }
+        public AnimationCurve WeightByDistance { set; private get; }
 
         [ShowInInspector, PropertyRange(-10, 10)]
-        public float LookAtWeight { get; set; }
 
         public LookAtTarget()
         {}
 
         public LookAtTarget(AnimationCurve sqrDistanceCloseModifier)
         {
-            SqrCloseModifier = sqrDistanceCloseModifier;
+            WeightByDistance = sqrDistanceCloseModifier;
         }
 
-        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
+        public Vector3 DirectionLookAt(Vector3 headReferencePoint)
         {
-            if (SqrCloseModifier == null) return Vector3.LerpUnclamped(Vector3.zero, TargetPoint, LookAtWeight);
+            Vector3 targetDirection = TargetPoint - headReferencePoint;
+            if (WeightByDistance == null) return targetDirection;
 
-            Vector3 closeOffset = TargetPoint - headReferencePoint;
-            closeOffset *= SqrCloseModifier.Evaluate(closeOffset.sqrMagnitude);
-            return Vector3.LerpUnclamped(Vector3.zero, TargetPoint + closeOffset, LookAtWeight);
+            targetDirection *= WeightByDistance.Evaluate(targetDirection.magnitude);
+            return targetDirection;
         }
 
         private CoroutineHandle _trackHandle;
@@ -68,7 +64,7 @@ namespace IKEssentials
         }
     }
 
-    public class LookAtMovement : ILookAtControl
+    public class LookAtMovement : ILookAtCalculator
     {
         public IKinematicData Velocity { set; private get; }
         public float MagnitudeModifier;
@@ -79,36 +75,44 @@ namespace IKEssentials
         }
 
         [ShowInInspector, PropertyRange(-10, 10)]
-        public float LookAtWeight { get; set; }
-        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
+        public Vector3 DirectionLookAt(Vector3 headReferencePoint)
         {
-            Vector3 targetPoint = headReferencePoint + Velocity.DesiredVelocity * MagnitudeModifier;
-            return Vector3.LerpUnclamped(Vector3.zero, targetPoint, LookAtWeight);
-
+            return Velocity.DesiredVelocity * MagnitudeModifier;
         }
     }
 
-    public class LookAtRandom : ILookAtControl
+    public class LookAtRandom : ILookAtCalculator
     {
 
         public Transform InverseReference { set; private get; }
         public SRange UpdateFrequency { set; private get; }
+        public float RandomStrength;
+        public float ForwardOffset;
 
-        public LookAtRandom(Transform headInverseReference,SRange updateFrequency)
+        public Transform RandomTargetToLook = null;
+
+        public LookAtRandom(Transform headInverseReference,SRange updateFrequency, 
+            float randomStrength = .3f, float forwardOffset = 2)
         {
             InverseReference = headInverseReference;
             UpdateFrequency = updateFrequency;
+            RandomStrength = randomStrength;
+            ForwardOffset = forwardOffset;
+
             Timing.RunCoroutine(DoRandomVariation());
         }
 
         [ShowInInspector, PropertyRange(-10, 10)]
-        public float LookAtWeight { get; set; }
         private Vector3 _currentDirection;
-        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
+        public Vector3 DirectionLookAt(Vector3 headReferencePoint)
         {
-            Vector3 targetPoint = headReferencePoint + _currentDirection;
-            return Vector3.LerpUnclamped(Vector3.zero, targetPoint, LookAtWeight);
-
+            if(RandomTargetToLook is null)
+                return _currentDirection;
+            else
+            {
+                Vector3 directionTowardsTarget = RandomTargetToLook.position - InverseReference.position;
+                return _currentDirection + directionTowardsTarget;
+            }
         }
 
         private IEnumerator<float> DoRandomVariation()
@@ -116,12 +120,17 @@ namespace IKEssentials
             while (InverseReference != null)
             {
                 yield return Timing.WaitForSeconds(UpdateFrequency.RandomInRange());
-                _currentDirection = InverseReference.TransformDirection(Random.insideUnitCircle);
+                Vector2 randomDirection = Random.insideUnitCircle * RandomStrength;
+
+                _currentDirection = InverseReference.TransformDirection(
+                    randomDirection.x,
+                    randomDirection.y,
+                    ForwardOffset);
             }
         }
     }
 
-    public class LookAtHeadData : ILookAtControl
+    public class LookAtHeadData : ILookAtCalculator
     {
         public ICharacterTransformData LookAtHead { set; private get; }
 
@@ -131,11 +140,9 @@ namespace IKEssentials
         }
 
         [ShowInInspector, PropertyRange(-10, 10)]
-        public float LookAtWeight { get; set; }
-        public Vector3 PointOfLookAt(Vector3 headReferencePoint)
+        public Vector3 DirectionLookAt(Vector3 headReferencePoint)
         {
-            Vector3 targetPoint = LookAtHead.HeadPosition;
-            return Vector3.LerpUnclamped(Vector3.zero, targetPoint, LookAtWeight);
+            return LookAtHead.HeadPosition - headReferencePoint;
         }
     }
 

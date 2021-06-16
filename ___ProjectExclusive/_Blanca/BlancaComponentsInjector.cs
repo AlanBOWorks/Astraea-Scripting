@@ -9,6 +9,10 @@ namespace Blanca
     
     public class BlancaComponentsInjector : MonoInjector, ISerializationCallbackReceiver
     {
+        [Title("Coroutines Handler")] 
+        [SerializeField]
+        private CoroutineLoopHandler loopHandler = null;
+
         [Title("Components")] 
         [SerializeField, HideInPlayMode] private AnimancerComponent _bodyAnimancer = null;
         [SerializeField, HideInPlayMode] private AnimancerComponent _facialAnimancer = null;
@@ -26,8 +30,11 @@ namespace Blanca
 
         public override void DoInjection()
         {
-            BlancaEntity entity = BlancaEntitySingleton.Instance.Entity;
+            BlancaEntitySingleton singleton = BlancaEntitySingleton.Instance;
+            BlancaEntity entity = singleton.Entity;
 
+            //---- Coroutine Loop
+            singleton.CoroutineLoopHandler = loopHandler;
 
             //---- PathCalculators
             entity.PathControls = _pathControls;

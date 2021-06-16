@@ -228,52 +228,87 @@ namespace Blanca
         T Movement { get; }
         T Random { get; }
         T AtPlayer { get; }
+        T SecondaryTarget { get; }
     }
 
-    public struct BlancaLookAtWeights : IBlancaLookAtStructure<float> //Just for the structure (don't use for boxing)
+    public interface IBlancaLookAtModifiable<in T>
     {
-        public BlancaLookAtWeights(float target, float movement, float random, float atPlayer)
+        T Target { set; }
+        T Movement { set; }
+        T Random { set; }
+        T AtPlayer { set; }
+        T SecondaryTarget { set; }
+
+    }
+
+    public class BlancaLookWeights : BlancaLookAtStructure<float>
+    {
+        public BlancaLookWeights() : base()
         {
-            Target = target;
-            Movement = movement;
-            Random = random;
-            AtPlayer = atPlayer;
+            for (int i = 0; i < Elements.Capacity; i++)
+            {
+                Elements.Add(0);
+            }
+        }
+    }
+
+    public class BlancaLookNormalizedDirections : BlancaLookAtStructure<Vector3>
+    {
+        public BlancaLookNormalizedDirections() : base()
+        {
+            for (int i = 0; i < Elements.Capacity; i++)
+            {
+                Elements.Add(Vector3.zero);
+            }
         }
 
-        public float Target { get; set; }
-        public float Movement { get; set; }
-        public float Random { get; set; }
-        public float AtPlayer { get; set; }
+        public static List<Vector3> GenerateList()
+        {
+            List<Vector3> list = new List<Vector3>(LookAtTypesAmount);
+            for (int i = 0; i < list.Capacity; i++)
+            {
+                list.Add(Vector3.zero);
+            }
+
+            return list;
+        }
     }
 
-    public class BlancaLookAtStructure<T> : IBlancaLookAtStructure<T>
+
+    public class BlancaLookAtStructure<T> : IBlancaLookAtStructure<T>,IBlancaLookAtModifiable<T>
     {
         [ShowInInspector]
-        public T Target
+        public virtual T Target
         {
             get => Elements[TargetIndex];
-            protected set => Elements[TargetIndex] = value;
+            set => Elements[TargetIndex] = value;
         }
 
         [ShowInInspector]
         public T Movement
         {
             get => Elements[MovementIndex];
-            protected set => Elements[MovementIndex] = value;
+            set => Elements[MovementIndex] = value;
         }
 
         [ShowInInspector]
         public T Random
         {
             get => Elements[RandomIndex];
-            protected set => Elements[RandomIndex] = value;
+            set => Elements[RandomIndex] = value;
         }
 
         [ShowInInspector]
         public T AtPlayer
         {
             get => Elements[AtPlayerIndex];
-            protected set => Elements[AtPlayerIndex] = value;
+            set => Elements[AtPlayerIndex] = value;
+        }
+        [ShowInInspector]
+        public T SecondaryTarget
+        {
+            get => Elements[SecondaryTargetIndex];
+            set => Elements[SecondaryTargetIndex] = value;
         }
 
         public List<T> Elements { get; }
@@ -283,8 +318,9 @@ namespace Blanca
         public const int MovementIndex = TargetIndex + 1;
         public const int RandomIndex = MovementIndex + 1;
         public const int AtPlayerIndex = RandomIndex + 1;
+        public const int SecondaryTargetIndex = AtPlayerIndex + 1;
 
-        public const int LookAtTypesAmount = AtPlayerIndex + 1;
+        public const int LookAtTypesAmount = SecondaryTargetIndex + 1;
 
         public BlancaLookAtStructure()
         {
@@ -327,10 +363,12 @@ namespace Blanca
         [SerializeField] private T _movement;
         [SerializeField] private T _random;
         [SerializeField] private T _atPlayer;
+        [SerializeField] private T _secondaryTarget;
 
         public T Target => _target;
         public T Movement => _movement;
         public T Random => _random;
         public T AtPlayer => _atPlayer;
+        public T SecondaryTarget => _secondaryTarget;
     }
 }

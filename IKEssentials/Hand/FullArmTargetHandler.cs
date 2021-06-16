@@ -27,26 +27,13 @@ namespace IKEssentials
         private Transform _currentTarget;
         private Transform _currentBendTarget;
 
+
+
         private CoroutineHandle _tickHandle;
-
-        private IEnumerator<float> Tick()
-        {
-            while (_handSolver != null)
-            {
-                Vector3 targetPoint = _currentTarget.position;
-                Quaternion targetRotation = _currentTarget.rotation;
-
-                _handSolver.SetTarget(targetPoint);
-                _handSolver.SetRotation(targetRotation);
-                if (_currentBendTarget != null)
-                    _bend.direction = _currentBendTarget.position - targetPoint;
-
-                yield return Timing.WaitForOneFrame;
-            }
-        }
-
-
         private CoroutineHandle _smoothHandle;
+        private const Segment TargetSegment = Segment.LateUpdate;
+
+        /// <param name="smoothSpeed">if blow 0: instant change</param>
         public void HandleHandTarget(UHandTargetBase targetData, float smoothSpeed)
         {
             IHandTransformsTarget targets = targetData.GetTransformsTarget();
@@ -65,9 +52,9 @@ namespace IKEssentials
 
             float lerpAmount = (smoothSpeed <= 0) ? 1 : 0;
             if (data != null)
-                _smoothHandle = Timing.RunCoroutine(_DoSmoothDataLerp(),Segment.LateUpdate);
+                _smoothHandle = Timing.RunCoroutine(_DoSmoothDataLerp(), TargetSegment);
             else
-                _smoothHandle = Timing.RunCoroutine(_DoSmoothDefaultLerp(), Segment.LateUpdate);
+                _smoothHandle = Timing.RunCoroutine(_DoSmoothDefaultLerp(), TargetSegment);
 
 
 
@@ -185,8 +172,25 @@ namespace IKEssentials
                 }
                 else
                 {
-                    _tickHandle = Timing.RunCoroutine(Tick(), Segment.LateUpdate);
+                    _tickHandle = Timing.RunCoroutine(Tick(), TargetSegment);
                 }
+            }
+        }
+
+
+        private IEnumerator<float> Tick()
+        {
+            while (_handSolver != null)
+            {
+                Vector3 targetPoint = _currentTarget.position;
+                Quaternion targetRotation = _currentTarget.rotation;
+
+                _handSolver.SetTarget(targetPoint);
+                _handSolver.SetRotation(targetRotation);
+                if (_currentBendTarget != null)
+                    _bend.direction = _currentBendTarget.position - targetPoint;
+
+                yield return Timing.WaitForOneFrame;
             }
         }
 

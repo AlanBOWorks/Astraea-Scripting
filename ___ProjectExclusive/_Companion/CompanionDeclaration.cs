@@ -11,6 +11,10 @@ namespace Companion
 {
     public class CompanionDeclaration : MonoBehaviour
     {
+        [Title("Coroutine Handler")] 
+        [SerializeField]
+        private CoroutineLoopHandler loopHandler = null;
+
         [Title("Spawn")]
         [SerializeField] 
         private MainCharactersSpawner _spawner = new MainCharactersSpawner();
@@ -20,6 +24,7 @@ namespace Companion
 
         [Title("Runtime Parameters")]
         [SerializeField] private HoldHandParameters holdHandParameters = new HoldHandParameters();
+        [SerializeField] private LookAtTrackerParams lookAtTrackerParams = new LookAtTrackerParams();
 
         void Awake()
         {
@@ -28,13 +33,15 @@ namespace Companion
 
         private void Start()
         {
-            CompanionEntity entity = CompanionEntitySingleton.Instance.Entity; 
+            CompanionEntitySingleton singleton = CompanionEntitySingleton.Instance;;
+            singleton.CoroutineLoopHandler = loopHandler;
+            CompanionEntity entity = singleton.Entity; 
             BlancaEntity blancaEntity = BlancaEntitySingleton.Instance.Entity;
             PlayerEntity playerEntity = PlayerEntitySingleton.Instance.Entity;
 
             InstantiateHandHoldHandler();
             behaviourHolder.CallForCompanionEntityInitialization();
-
+            InstantiateLogic();
 
             void InstantiateHandHoldHandler()
             {
@@ -58,8 +65,12 @@ namespace Companion
                     holdHandTransforms);
                 entity.HoldHandHandler = holdHandHandler;
                 holdHandHandler.InjectParameters(holdHandParameters);
+            }
 
-
+            void InstantiateLogic()
+            {
+                LookAtTracker lookAtTracker = new LookAtTracker(lookAtTrackerParams);
+                entity.LookAtTracker = lookAtTracker;
             }
         }
 
